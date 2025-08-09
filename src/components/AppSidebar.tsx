@@ -22,6 +22,7 @@ import {
   Eye,
   User,
   PanelLeft,
+  PanelLeftOpen,
   HelpCircle,
   Bell,
   Home,
@@ -69,7 +70,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   }, [chats]);
 
   return (
-    <Sidebar collapsible="icon" className="overflow-hidden z-20">
+    <Sidebar collapsible="icon" className="h-screen overflow-hidden z-[3]">
       <SidebarContent>
         <SidebarHeader>
           <div className="flex items-center justify-between px-2 py-2">
@@ -86,7 +87,11 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <MessageSquare className="h-4 w-4 text-primary-foreground" />
               </div>
             )}
-            {!collapsed && (
+            {collapsed ? (
+              <Button variant="ghost" size="icon" aria-label="Expand sidebar" onClick={toggleSidebar}>
+                <PanelLeftOpen className="h-4 w-4" />
+              </Button>
+            ) : (
               <Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleSidebar}>
                 <PanelLeft className="h-4 w-4" />
               </Button>

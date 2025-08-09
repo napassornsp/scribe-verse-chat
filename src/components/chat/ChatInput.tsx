@@ -104,7 +104,7 @@ export default function ChatInput({ disabled, onSend }: Props) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Type your message..."
-          className="min-h-[60px] max-h-60 resize-none overflow-y-auto"
+          className="w-full min-w-0 min-h-[60px] max-h-60 resize-none overflow-y-auto"
           aria-label="Message input"
           disabled={disabled}
         />

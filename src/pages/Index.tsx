@@ -184,7 +184,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full overflow-x-hidden">
+      <div className="min-h-screen grid grid-cols-[auto_1fr] w-full overflow-x-hidden">
         <AppSidebar
           chats={chats}
           activeId={activeId}
@@ -196,9 +196,9 @@ const Index = () => {
         />
 
         <SidebarInset>
-          <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
-          <main className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
-            <section className="flex-1 overflow-y-auto p-4 space-y-4" aria-live="polite">
+          <main className="flex-1 min-w-0 grid grid-rows-[auto_1fr_auto] overflow-x-hidden">
+            <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
+            <section className="min-w-0 overflow-y-auto p-4 space-y-4" aria-live="polite">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground mt-10">Start your first conversation…</div>
               )}
@@ -208,7 +208,7 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
-            <div className="sticky bottom-0 bg-background"><ChatInput disabled={sending} onSend={send} /></div>
+            <div className="sticky bottom-0 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
       </div>

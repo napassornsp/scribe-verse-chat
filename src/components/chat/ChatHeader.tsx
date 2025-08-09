@@ -17,9 +17,8 @@ export function ChatHeader({ version, credits, onVersionChange }: ChatHeaderProp
 
   return (
     <header className="sticky top-0 z-10 h-14 border-b flex items-center px-3 gap-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <Badge variant="secondary" aria-live="polite">Credits: {remaining}</Badge>
-      <h1 className="text-base font-medium">ChatBot Version</h1>
-      <div className="ml-auto flex items-center gap-3">
+      <h1 className="text-base font-medium flex items-center gap-2">
+        <span>Chatbot Version</span>
         <Select value={version} onValueChange={(v) => onVersionChange(v as BotVersion)}>
           <SelectTrigger className="w-28">
             <SelectValue />
@@ -30,6 +29,9 @@ export function ChatHeader({ version, credits, onVersionChange }: ChatHeaderProp
             <SelectItem value="V3">V3</SelectItem>
           </SelectContent>
         </Select>
+      </h1>
+      <div className="ml-auto">
+        <Badge variant="secondary" aria-live="polite">Credits: {remaining}</Badge>
       </div>
     </header>
   );
