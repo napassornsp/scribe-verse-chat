@@ -61,7 +61,7 @@ const Index = () => {
       try {
         const [creditsRes, chatsRes] = await Promise.all([
           service.getCredits(),
-          service.listChats(50, 0),
+          service.listChats(1000, 0),
         ]);
         setCredits(creditsRes);
         setChats(chatsRes);
@@ -196,9 +196,9 @@ const Index = () => {
         />
 
         <SidebarInset>
-          <main className="flex-1 min-w-0 grid grid-rows-[auto_1fr_auto_auto] overflow-x-hidden">
+          <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto_auto] overflow-x-hidden">
             <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
-            <section className="min-w-0 overflow-y-auto p-4 space-y-4" aria-live="polite">
+            <section className="min-w-0 min-h-0 overflow-y-auto p-4 space-y-4 break-words" aria-live="polite">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground mt-10">Start your first conversation…</div>
               )}
@@ -208,8 +208,7 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
-            <div className="sticky bottom-0 z-10 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
-            <div className="py-2 text-center text-xs text-muted-foreground">Chatbot can make mistakes. Check important info.</div>
+            <div className="sticky bottom-0 z-20 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
       </div>

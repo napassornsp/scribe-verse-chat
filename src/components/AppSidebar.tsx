@@ -60,20 +60,22 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
     const recent: Chat[] = [];
     const last7: Chat[] = [];
     const last30: Chat[] = [];
+    const older: Chat[] = [];
 
     for (const c of chats) {
       const days = getAgeDays(c.created_at);
       if (days <= 1) recent.push(c);
       else if (days <= 7) last7.push(c);
       else if (days <= 30) last30.push(c);
+      else older.push(c);
     }
 
-    return { recent, last7, last30 };
+    return { recent, last7, last30, older };
   }, [chats]);
 
   return (
     <Sidebar collapsible="icon" className="h-screen overflow-hidden z-[3]">
-      <SidebarContent>
+      <SidebarContent className="overflow-hidden">
         <SidebarHeader>
           <div className="flex items-center justify-between px-2 py-2">
             {/* Logo area: expanded shows logo + name; collapsed shows compact logo only */}
@@ -233,6 +235,39 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                     <div className="px-2 py-1 text-xs text-muted-foreground uppercase tracking-wide">Last 30 Days</div>
                     <SidebarMenu>
                       {groups.last30.map((chat) => (
+                        <SidebarMenuItem key={chat.id}>
+                          <SidebarMenuButton
+                            isActive={activeId === chat.id}
+                            onClick={() => onSelect(chat.id)}
+                            tooltip={{ children: chat.title, hidden: false }}
+                            className="overflow-hidden"
+                          >
+                            <MessageSquare />
+                            <span className="truncate">{chat.title}</span>
+                          </SidebarMenuButton>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <SidebarMenuAction aria-label="Chat actions">…</SidebarMenuAction>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="z-50">
+                              <DropdownMenuItem onClick={() => {
+                                const name = window.prompt("Rename chat", chat.title);
+                                if (name) onRename(chat.id, name);
+                              }}>Rename</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onDelete(chat.id)}>Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </SidebarMenuItem>
+                      ))}
+                    </SidebarMenu>
+                  </div>
+                )}
+
+                {groups.older.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-2 py-1 text-xs text-muted-foreground uppercase tracking-wide">Older</div>
+                    <SidebarMenu>
+                      {groups.older.map((chat) => (
                         <SidebarMenuItem key={chat.id}>
                           <SidebarMenuButton
                             isActive={activeId === chat.id}

@@ -147,6 +147,8 @@ export default function ChatInput({ disabled, onSend }: Props) {
           </Tooltip>
         </div>
 
+        <div className="pt-1 text-center text-xs text-muted-foreground">Chatbot can make mistakes. Check important info.</div>
+
       </div>
     </TooltipProvider>
   );
