@@ -59,24 +59,18 @@ const Index = () => {
     if (!user) return;
     (async () => {
       try {
-        const creditsRes = await service.getCredits();
-        const pageSize = 500;
-        let offset = 0;
-        let all: Chat[] = [];
-        while (true) {
-          const batch = await service.listChats(pageSize, offset);
-          all = all.concat(batch);
-          if (batch.length < pageSize) break;
-          offset += pageSize;
-        }
+        const [creditsRes, chatsRes] = await Promise.all([
+          service.getCredits(),
+          service.listChats(1000, 0),
+        ]);
         setCredits(creditsRes);
-        setChats(all);
-        if (all.length === 0) {
+        setChats(chatsRes);
+        if (chatsRes.length === 0) {
           const created = await service.createChat("New Chat");
           setChats([created]);
           setActiveId(created.id);
         } else {
-          setActiveId(all[0].id);
+          setActiveId(chatsRes[0].id);
         }
       } catch (e: any) {
         toast({ title: "Load error", description: e.message ?? String(e) });
@@ -201,8 +195,8 @@ const Index = () => {
           loggedIn={!!user}
         />
 
-        <SidebarInset className="h-svh min-h-0 overflow-hidden">
-          <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto] h-full overflow-hidden overflow-x-hidden">
+        <SidebarInset>
+          <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto] h-svh overflow-hidden overflow-x-hidden">
             <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
             <section className="min-w-0 min-h-0 overflow-y-auto p-4 space-y-4 break-words" aria-live="polite">
               {messages.length === 0 && (
@@ -214,7 +208,7 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
-            <div className="z-20 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
+            <div className="sticky bottom-0 z-20 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
       </div>

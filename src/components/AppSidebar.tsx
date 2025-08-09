@@ -74,8 +74,8 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   }, [chats]);
 
   return (
-    <Sidebar collapsible="icon" className="h-svh overflow-hidden z-[3]">
-      <SidebarContent className="h-full flex flex-col overflow-hidden">
+    <Sidebar collapsible="icon" className="h-screen overflow-hidden z-[3]">
+      <SidebarContent className="overflow-hidden">
         <SidebarHeader>
           <div className="flex items-center justify-between px-2 py-2">
             {/* Logo area: expanded shows logo + name; collapsed shows compact logo only */}
@@ -307,11 +307,11 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <SidebarMenuItem>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "mx-auto justify-center w-10 h-10 p-0" : ""}`}>
-                        <div className="relative h-6 w-6 flex items-center justify-center">
-                          <User className="h-5 w-5" />
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "w-full justify-center mx-auto" : ""}`}>
+                        <div className="relative">
+                          <User />
                           {/* Notification dot */}
-                          <span className={`absolute ${collapsed ? "top-0 right-0" : "-top-0.5 -right-0.5"} h-2 w-2 rounded-full bg-destructive`} aria-hidden></span>
+                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" aria-hidden></span>
                         </div>
                         {!collapsed && <span>Profile</span>}
                       </SidebarMenuButton>
