@@ -75,7 +75,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
 
   return (
     <Sidebar collapsible="icon" className="h-svh overflow-hidden z-[3]">
-      <SidebarContent className="overflow-hidden">
+      <SidebarContent className="h-full flex flex-col overflow-hidden">
         <SidebarHeader>
           <div className="flex items-center justify-between px-2 py-2">
             {/* Logo area: expanded shows logo + name; collapsed shows compact logo only */}
@@ -307,7 +307,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <SidebarMenuItem>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "self-center justify-center" : ""}`}>
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "mx-auto justify-center w-10 h-10" : ""}`}>
                         <div className="relative">
                           <User />
                           {/* Notification dot */}
