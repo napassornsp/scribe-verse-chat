@@ -265,7 +265,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <SidebarMenuItem>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className="overflow-hidden">
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "justify-center" : ""}`}>
                         <div className="relative">
                           <User />
                           {/* Notification dot */}
@@ -274,7 +274,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                         {!collapsed && <span>Profile</span>}
                       </SidebarMenuButton>
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="z-50 p-1 w-56">
+                    <PopoverContent align="end" className="p-1 w-56">
                       <div className="flex flex-col">
                         <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/")}>
                           <Home className="h-4 w-4" /> Home

@@ -208,8 +208,8 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
+            <div className="sticky bottom-0 z-10 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
             <div className="py-2 text-center text-xs text-muted-foreground">Chatbot can make mistakes. Check important info.</div>
-            <div className="sticky bottom-0 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
       </div>
