@@ -201,8 +201,8 @@ const Index = () => {
           loggedIn={!!user}
         />
 
-        <SidebarInset className="overflow-hidden">
-          <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto] h-svh overflow-hidden overflow-x-hidden">
+        <SidebarInset className="h-svh min-h-0 overflow-hidden">
+          <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto] h-full overflow-hidden overflow-x-hidden">
             <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
             <section className="min-w-0 min-h-0 overflow-y-auto p-4 space-y-4 break-words" aria-live="polite">
               {messages.length === 0 && (
