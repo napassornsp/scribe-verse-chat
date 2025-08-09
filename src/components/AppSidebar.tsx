@@ -133,7 +133,14 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                   {!collapsed && <span>Vision AI</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {/* New Chat placed below Vision AI and visually outstanding */}
+              {/* New Chat moved to its own section below */}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={onNewChat}
