@@ -307,11 +307,11 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <SidebarMenuItem>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "mx-auto justify-center w-10 h-10" : ""}`}>
-                        <div className="relative">
-                          <User />
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "mx-auto justify-center w-10 h-10 p-0" : ""}`}>
+                        <div className="relative h-6 w-6 flex items-center justify-center">
+                          <User className="h-5 w-5" />
                           {/* Notification dot */}
-                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" aria-hidden></span>
+                          <span className={`absolute ${collapsed ? "top-0 right-0" : "-top-0.5 -right-0.5"} h-2 w-2 rounded-full bg-destructive`} aria-hidden></span>
                         </div>
                         {!collapsed && <span>Profile</span>}
                       </SidebarMenuButton>
