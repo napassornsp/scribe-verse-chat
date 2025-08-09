@@ -59,18 +59,24 @@ const Index = () => {
     if (!user) return;
     (async () => {
       try {
-        const [creditsRes, chatsRes] = await Promise.all([
-          service.getCredits(),
-          service.listChats(1000, 0),
-        ]);
+        const creditsRes = await service.getCredits();
+        const pageSize = 500;
+        let offset = 0;
+        let all: Chat[] = [];
+        while (true) {
+          const batch = await service.listChats(pageSize, offset);
+          all = all.concat(batch);
+          if (batch.length < pageSize) break;
+          offset += pageSize;
+        }
         setCredits(creditsRes);
-        setChats(chatsRes);
-        if (chatsRes.length === 0) {
+        setChats(all);
+        if (all.length === 0) {
           const created = await service.createChat("New Chat");
           setChats([created]);
           setActiveId(created.id);
         } else {
-          setActiveId(chatsRes[0].id);
+          setActiveId(all[0].id);
         }
       } catch (e: any) {
         toast({ title: "Load error", description: e.message ?? String(e) });
@@ -195,7 +201,7 @@ const Index = () => {
           loggedIn={!!user}
         />
 
-        <SidebarInset>
+        <SidebarInset className="overflow-hidden">
           <main className="flex-1 min-w-0 min-h-0 grid grid-rows-[auto_1fr_auto] h-svh overflow-hidden overflow-x-hidden">
             <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
             <section className="min-w-0 min-h-0 overflow-y-auto p-4 space-y-4 break-words" aria-live="polite">
