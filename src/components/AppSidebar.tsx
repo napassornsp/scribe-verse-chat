@@ -160,7 +160,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
         <SidebarSeparator />
 
         {!collapsed && (
-          <SidebarGroup className="min-h-0 flex-1 overflow-hidden">
+            <SidebarGroup className="min-h-0 flex-1 overflow-hidden">
             <SidebarGroupLabel>History</SidebarGroupLabel>
             <SidebarGroupContent>
               <div className="min-h-0 max-h-full overflow-y-auto pr-1">
@@ -300,14 +300,14 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
           </SidebarGroup>
         )}
 
-        <SidebarFooter>
+        <SidebarFooter className="mt-auto">
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "justify-center" : ""}`}>
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className={`overflow-hidden ${collapsed ? "w-full justify-center mx-auto" : ""}`}>
                         <div className="relative">
                           <User />
                           {/* Notification dot */}
