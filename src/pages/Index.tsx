@@ -207,7 +207,7 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
-            <ChatInput disabled={sending} onSend={send} />
+            <div className="sticky bottom-0 bg-background"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
       </div>
