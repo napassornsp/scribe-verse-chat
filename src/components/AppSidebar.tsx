@@ -135,6 +135,19 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                   {!collapsed && <span>Vision AI</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={{ children: "Notifications", hidden: false }}
+                  className="overflow-hidden"
+                  onClick={() => (window.location.href = "/notifications")}
+                >
+                  <div className="relative">
+                    <Bell />
+                    <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] px-[2px] leading-none">3</span>
+                  </div>
+                  {!collapsed && <span>Notifications</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {/* New Chat moved to its own section below */}
             </SidebarMenu>
           </SidebarGroupContent>

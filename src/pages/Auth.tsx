@@ -4,9 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import service from "@/services/backend";
+import { useLocation } from "react-router-dom";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const location = useLocation();
+  const path = location.pathname.toLowerCase();
+  const initialMode: "signin" | "signup" = path.includes("register") ? "signup" : path.includes("login") ? "signin" : "signin";
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
