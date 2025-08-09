@@ -125,8 +125,6 @@ export default function ChatInput({ disabled, onSend }: Props) {
         </Button>
       </div>
 
-      {/* Disclaimer */}
-      <p className="text-xs text-muted-foreground">Chatbot can make mistakes. Check important info.</p>
     </div>
   );
 }

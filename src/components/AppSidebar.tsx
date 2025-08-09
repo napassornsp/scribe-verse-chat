@@ -14,7 +14,7 @@ import {
   SidebarMenuAction,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   Plus,
   MessageSquare,
@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import service from "@/services/backend";
 import type { Chat } from "@/services/types";
 
@@ -88,13 +90,23 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
               </div>
             )}
             {collapsed ? (
-              <Button variant="ghost" size="icon" aria-label="Expand sidebar" onClick={toggleSidebar}>
-                <PanelLeftOpen className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Expand sidebar" onClick={toggleSidebar}>
+                    <PanelLeftOpen className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Expand</TooltipContent>
+              </Tooltip>
             ) : (
-              <Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleSidebar}>
-                <PanelLeft className="h-4 w-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleSidebar}>
+                    <PanelLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Collapse</TooltipContent>
+              </Tooltip>
             )}
           </div>
         </SidebarHeader>
@@ -104,19 +116,19 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Chatbot" isActive size="default" className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "Chatbot", hidden: false }} isActive size="default" className="overflow-hidden">
                   <MessageSquare />
                   {!collapsed && <span>Chatbot</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="OCR" disabled className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "OCR", hidden: false }} disabled className="overflow-hidden">
                   <FileText />
                   {!collapsed && <span>OCR</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Vision AI" disabled className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "Vision AI", hidden: false }} disabled className="overflow-hidden">
                   <Eye />
                   {!collapsed && <span>Vision AI</span>}
                 </SidebarMenuButton>
@@ -125,7 +137,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={onNewChat}
-                  tooltip="New Chat"
+                  tooltip={{ children: "New Chat", hidden: false }}
                   className="overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:brightness-110"
                 >
                   <Plus />
@@ -152,7 +164,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                           <SidebarMenuButton
                             isActive={activeId === chat.id}
                             onClick={() => onSelect(chat.id)}
-                            tooltip={chat.title}
+                            tooltip={{ children: chat.title, hidden: false }}
                             className="overflow-hidden"
                           >
                             <MessageSquare />
@@ -185,7 +197,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                           <SidebarMenuButton
                             isActive={activeId === chat.id}
                             onClick={() => onSelect(chat.id)}
-                            tooltip={chat.title}
+                            tooltip={{ children: chat.title, hidden: false }}
                             className="overflow-hidden"
                           >
                             <MessageSquare />
@@ -218,7 +230,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                           <SidebarMenuButton
                             isActive={activeId === chat.id}
                             onClick={() => onSelect(chat.id)}
-                            tooltip={chat.title}
+                            tooltip={{ children: chat.title, hidden: false }}
                             className="overflow-hidden"
                           >
                             <MessageSquare />
@@ -251,35 +263,45 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  {loggedIn ? (
-                    <SidebarMenuButton
-                      onClick={async () => {
-                        try { await service.signOut(); } catch {} finally { window.location.href = "/auth"; }
-                      }}
-                      tooltip="Logout"
-                      className="overflow-hidden"
-                    >
-                      <LogOut />
-                      {!collapsed && <span>Logout</span>}
-                    </SidebarMenuButton>
-                  ) : (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton tooltip="Profile" className="overflow-hidden">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <SidebarMenuButton tooltip={{ children: "Profile", hidden: false }} className="overflow-hidden">
+                        <div className="relative">
                           <User />
-                          {!collapsed && <span>Profile</span>}
-                        </SidebarMenuButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="z-50">
-                        <DropdownMenuItem onClick={() => (window.location.href = "/")}> <Home className="mr-2 h-4 w-4" /> Home</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { /* placeholder */ }}> <Bell className="mr-2 h-4 w-4" /> Notifications</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => (window.location.href = "/")}> <User className="mr-2 h-4 w-4" /> User Profile</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.open("https://docs.lovable.dev/", "_blank")}> <HelpCircle className="mr-2 h-4 w-4" /> Help</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => (window.location.href = "/auth")}> <LogIn className="mr-2 h-4 w-4" /> Login</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+                          {/* Notification dot */}
+                          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive" aria-hidden></span>
+                        </div>
+                        {!collapsed && <span>Profile</span>}
+                      </SidebarMenuButton>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="z-50 p-1 w-56">
+                      <div className="flex flex-col">
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/")}>
+                          <Home className="h-4 w-4" /> Home
+                        </button>
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/profile")}>
+                          <User className="h-4 w-4" /> User Profile
+                        </button>
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => {}}>
+                          <Bell className="h-4 w-4" /> Notifications
+                          <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs px-1">3</span>
+                        </button>
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => window.open("https://docs.lovable.dev/", "_blank")}>
+                          <HelpCircle className="h-4 w-4" /> Help
+                        </button>
+                        <div className="my-1 border-t" />
+                        {loggedIn ? (
+                          <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={async () => { try { await service.signOut(); } catch {} finally { window.location.href = "/auth"; } }}>
+                            <LogOut className="h-4 w-4" /> Logout
+                          </button>
+                        ) : (
+                          <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/auth")}>
+                            <LogIn className="h-4 w-4" /> Login
+                          </button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>

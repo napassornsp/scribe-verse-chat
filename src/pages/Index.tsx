@@ -196,7 +196,7 @@ const Index = () => {
         />
 
         <SidebarInset>
-          <main className="flex-1 min-w-0 grid grid-rows-[auto_1fr_auto] overflow-x-hidden">
+          <main className="flex-1 min-w-0 grid grid-rows-[auto_1fr_auto_auto] overflow-x-hidden">
             <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
             <section className="min-w-0 overflow-y-auto p-4 space-y-4" aria-live="polite">
               {messages.length === 0 && (
@@ -208,6 +208,7 @@ const Index = () => {
               {showTyping && <TypingBubble />}
               <div ref={messagesEndRef} />
             </section>
+            <div className="py-2 text-center text-xs text-muted-foreground">Chatbot can make mistakes. Check important info.</div>
             <div className="sticky bottom-0 bg-background border-t"><ChatInput disabled={sending} onSend={send} /></div>
           </main>
         </SidebarInset>
