@@ -184,7 +184,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full overflow-x-hidden">
         <AppSidebar
           chats={chats}
           activeId={activeId}
@@ -192,11 +192,12 @@ const Index = () => {
           onNewChat={onNewChat}
           onRename={onRename}
           onDelete={onDelete}
+          loggedIn={!!user}
         />
 
         <SidebarInset>
           <ChatHeader version={version} credits={credits} onVersionChange={setVersion} />
-          <main className="flex-1 flex flex-col">
+          <main className="flex-1 min-w-0 flex flex-col overflow-x-hidden">
             <section className="flex-1 overflow-y-auto p-4 space-y-4" aria-live="polite">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground mt-10">Start your first conversation…</div>

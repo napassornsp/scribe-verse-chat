@@ -40,9 +40,10 @@ interface AppSidebarProps {
   onNewChat: () => void;
   onRename: (id: string, title: string) => void;
   onDelete: (id: string) => void;
+  loggedIn?: boolean;
 }
 
-export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onDelete }: AppSidebarProps) {
+export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onDelete, loggedIn }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -68,16 +69,23 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   }, [chats]);
 
   return (
-    <Sidebar collapsible="icon" className="overflow-hidden">
+    <Sidebar collapsible="icon" className="overflow-hidden z-20">
       <SidebarContent>
         <SidebarHeader>
           <div className="flex items-center justify-between px-2 py-2">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-                <MessageSquare className="h-4 w-4 text-primary" />
+            {/* Logo area: expanded shows logo + name; collapsed shows compact logo only */}
+            {!collapsed ? (
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="h-4 w-4 text-primary" />
+                </div>
+                <span className="font-semibold text-sm">Company</span>
               </div>
-              {!collapsed && <span className="font-semibold text-sm">Company</span>}
-            </div>
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+                <MessageSquare className="h-4 w-4 text-primary-foreground" />
+              </div>
+            )}
             {!collapsed && (
               <Button variant="ghost" size="icon" aria-label="Collapse sidebar" onClick={toggleSidebar}>
                 <PanelLeft className="h-4 w-4" />
@@ -90,12 +98,6 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
           {!collapsed && <SidebarGroupLabel>Modules</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={onNewChat} tooltip="New Chat" className="overflow-hidden">
-                  <Plus />
-                  {!collapsed && <span>New Chat</span>}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton tooltip="Chatbot" isActive size="default" className="overflow-hidden">
                   <MessageSquare />
@@ -112,6 +114,17 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 <SidebarMenuButton tooltip="Vision AI" disabled className="overflow-hidden">
                   <Eye />
                   {!collapsed && <span>Vision AI</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* New Chat placed below Vision AI and visually outstanding */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={onNewChat}
+                  tooltip="New Chat"
+                  className="overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:brightness-110"
+                >
+                  <Plus />
+                  {!collapsed && <span className="font-medium">New Chat</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -233,23 +246,35 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuButton tooltip="Profile" className="overflow-hidden">
-                        <User />
-                        {!collapsed && <span>Profile</span>}
-                      </SidebarMenuButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="z-50">
-                      <DropdownMenuItem onClick={() => (window.location.href = "/")}> <Home className="mr-2 h-4 w-4" /> Home</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { /* placeholder */ }}> <Bell className="mr-2 h-4 w-4" /> Notifications</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => (window.location.href = "/")}> <User className="mr-2 h-4 w-4" /> User Profile</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => window.open("https://docs.lovable.dev/", "_blank")}> <HelpCircle className="mr-2 h-4 w-4" /> Help</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => (window.location.href = "/auth")}> <LogIn className="mr-2 h-4 w-4" /> Login</DropdownMenuItem>
-                      <DropdownMenuItem onClick={async () => { try { await service.signOut(); } catch {} finally { window.location.href = "/auth"; } }}> <LogOut className="mr-2 h-4 w-4" /> Logout</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {loggedIn ? (
+                    <SidebarMenuButton
+                      onClick={async () => {
+                        try { await service.signOut(); } catch {} finally { window.location.href = "/auth"; }
+                      }}
+                      tooltip="Logout"
+                      className="overflow-hidden"
+                    >
+                      <LogOut />
+                      {!collapsed && <span>Logout</span>}
+                    </SidebarMenuButton>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <SidebarMenuButton tooltip="Profile" className="overflow-hidden">
+                          <User />
+                          {!collapsed && <span>Profile</span>}
+                        </SidebarMenuButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="z-50">
+                        <DropdownMenuItem onClick={() => (window.location.href = "/")}> <Home className="mr-2 h-4 w-4" /> Home</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { /* placeholder */ }}> <Bell className="mr-2 h-4 w-4" /> Notifications</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => (window.location.href = "/")}> <User className="mr-2 h-4 w-4" /> User Profile</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => window.open("https://docs.lovable.dev/", "_blank")}> <HelpCircle className="mr-2 h-4 w-4" /> Help</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => (window.location.href = "/auth")}> <LogIn className="mr-2 h-4 w-4" /> Login</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>

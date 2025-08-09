@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import type { BotVersion, Credits } from "@/services/types";
@@ -18,20 +17,20 @@ export function ChatHeader({ version, credits, onVersionChange }: ChatHeaderProp
 
   return (
     <header className="sticky top-0 z-10 h-14 border-b flex items-center px-3 gap-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <SidebarTrigger className="ml-1" />
       <Badge variant="secondary" aria-live="polite">Credits: {remaining}</Badge>
       <h1 className="text-base font-medium">ChatBot Version</h1>
-      <Select value={version} onValueChange={(v) => onVersionChange(v as BotVersion)}>
-        <SelectTrigger className="w-28">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="V1">V1</SelectItem>
-          <SelectItem value="V2">V2</SelectItem>
-          <SelectItem value="V3">V3</SelectItem>
-        </SelectContent>
-      </Select>
-      <div className="ml-auto text-sm text-muted-foreground">Switch versions anytime</div>
+      <div className="ml-auto flex items-center gap-3">
+        <Select value={version} onValueChange={(v) => onVersionChange(v as BotVersion)}>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="V1">V1</SelectItem>
+            <SelectItem value="V2">V2</SelectItem>
+            <SelectItem value="V3">V3</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
     </header>
   );
 }
