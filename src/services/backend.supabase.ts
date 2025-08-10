@@ -30,12 +30,11 @@ const service: BackendService = {
   },
 
   async getCredits(): Promise<Credits> {
-    const { data, error } = await supabase
-      .from("user_credits")
-      .select("v1, v2, v3")
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('reset_monthly_credits');
     if (error || !data) return { v1: 0, v2: 0, v3: 0 };
-    return data as Credits;
+    // Supabase RPC returns an array for set-returning functions; handle both cases
+    const row = Array.isArray(data) ? data[0] : data;
+    return { v1: row?.v1 ?? 0, v2: row?.v2 ?? 0, v3: row?.v3 ?? 0 } as Credits;
   },
 
   async createChat(title?: string): Promise<Chat> {

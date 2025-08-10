@@ -59,6 +59,9 @@ serve(async (req) => {
       });
     }
 
+    // Ensure monthly credits are reset based on plan
+    await supabase.rpc('reset_monthly_credits');
+
     // Fetch credits
     const { data: creditsRow, error: creditsErr } = await supabase
       .from("user_credits")

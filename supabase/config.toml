@@ -2,3 +2,6 @@ project_id = "hgagdumrfcftcphylgvc"
 
 [functions.chat-router]
 verify_jwt = true
+
+[functions.contact-support]
+verify_jwt = false
