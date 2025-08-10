@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { ZoomIn, ZoomOut, RefreshCw, FlipHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 export default function BillDetail() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -32,6 +32,55 @@ export default function BillDetail() {
   const [billCredits, setBillCredits] = useState<number | null>(null);
   const [billMax, setBillMax] = useState<number | null>(null);
 
+  // Annotation workspace state
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [drawnRect, setDrawnRect] = useState<{ left: number; top: number; width: number; height: number }>({ left: 0, top: 0, width: 0, height: 0 });
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [boxes, setBoxes] = useState<Record<string, { x: number; y: number; w: number; h: number }>>({});
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [tableHeaders, setTableHeaders] = useState<string[]>([]);
+  const [tableRows, setTableRows] = useState<string[][]>([]);
+  const [editKey, setEditKey] = useState<string | null>(null);
+
+  const FIELD_LIST: { key: string; label: string }[] = [
+    { key: 'buyer_name_thai', label: 'ชื่อผู้ซื้อภาษาไทย (buyer_name_thai)' },
+    { key: 'buyer_name_eng', label: 'ชื่อผู้ซื้อภาษาอังกฤษ (buyer_name_eng)' },
+    { key: 'buyer_branch', label: 'สาขาผู้ซื้อ (buyer_branch)' },
+    { key: 'buyer_address_thai', label: 'ที่อยู่ผู้ซื้อภาษาไทย (buyer_address_thai)' },
+    { key: 'buyer_address_eng', label: 'ที่อยู่ผู้ซื้อภาษาอังกฤษ (buyer_address_eng)' },
+    { key: 'buyer_vat_number', label: 'หมายเลขภาษีผู้ซื้อ (buyer_vat_number)' },
+    { key: 'seller_name_thai', label: 'ชื่อผู้ขายภาษาไทย (seller_name_thai)' },
+    { key: 'seller_name_eng', label: 'ชื่อผู้ขายภาษาอังกฤษ (seller_name_eng)' },
+    { key: 'seller_branch', label: 'สาขาผู้ขาย (seller_branch)' },
+    { key: 'seller_address_thai', label: 'ที่อยู่ผู้ขายภาษาไทย (seller_address_thai)' },
+    { key: 'seller_address_eng', label: 'ที่อยู่ผู้ขายภาษาอังกฤษ (seller_address_eng)' },
+    { key: 'seller_vat_number', label: 'หมายเลขภาษีผู้ขาย (seller_vat_number)' },
+    { key: 'document_type', label: 'ประเภทเอกสาร (Document type)' },
+    { key: 'doc_number', label: 'หมายเลขใบเอกสาร (Doc_number)' },
+    { key: 'doc_date', label: 'วันที่ของเอกสาร (Doc_date)' },
+    { key: 'discount_amount', label: 'จำนวนเงินส่วนลด (discount_amount)' },
+    { key: 'sub_total', label: 'ยอดรวมก่อนภาษี (sub_total)' },
+    { key: 'vat_percent', label: 'เปอร์เซ็นต์ภาษีมูลค่าเพิ่ม (vat_%)' },
+    { key: 'vat_amount', label: 'จำนวนเงินภาษีมูลค่าเพิ่ม (vat_amount)' },
+    { key: 'total_due_amount', label: 'ยอดรวมสุทธิ (total_due_amount)' },
+    { key: 'text_amount', label: 'ยอดรวมตัวอักษร (text_amount)' },
+    { key: 'currency', label: 'สกุลเงิน (currency)' },
+    { key: 'wht_percent', label: 'เปอร์เซ็นต์ภาษีหัก ณ ที่จ่าย (WHT_%)' },
+    { key: 'wht_amount', label: 'จำนวนเงินภาษีหัก ณ ที่จ่าย (WHT_amount)' },
+    { key: 'seller_fax_number', label: 'เบอร์แฟกซ์ผู้ขาย (seller_fax_number)' },
+    { key: 'buyer_fax_number', label: 'เบอร์แฟกซ์ผู้ซื้อ (buyer_fax_number)' },
+    { key: 'seller_phone', label: 'เบอร์โทรศัพท์ผู้ขาย (seller_phone)' },
+    { key: 'buyer_phone', label: 'เบอร์โทรศัพท์ผู้ซื้อ (buyer_phone)' },
+    { key: 'client_id', label: 'รหัสลูกค้า (client_id)' },
+    { key: 'payment_due_date', label: 'วันครบกำหนดชำระเงิน (payment_due_date)' },
+    { key: 'po_number', label: 'หมายเลขคำสั่งซื้อ (po_number)' },
+    { key: 'seller_email', label: 'อีเมลผู้ขาย (seller_email)' },
+    { key: 'seller_website', label: 'เว็บไซต์ผู้ขาย (seller_website)' },
+    { key: 'shipto_address', label: 'ที่อยู่จัดส่งสินค้า (shipto_address)' },
+    { key: 'product_code', label: 'รหัสสินค้า (product_code)' },
+    { key: 'exchange_rate', label: 'อัตราแลกเปลี่ยน (exchange rate)' },
+  ];
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -170,6 +219,68 @@ export default function BillDetail() {
   const zoomOut = () => setScale((s) => Math.max(0.5, parseFloat((s - 0.25).toFixed(2))));
   const resetView = () => { setScale(1); setFlipped(false); };
 
+  // Table defaults and helpers
+  const DEFAULT_HEADERS = ['ลำดับ', 'รายการสินค้า (Description)', 'จำนวนหน่วย (Quantity)', 'ราคาต่อหน่วย (Unit Price)', 'จำนวนเงิน (Amount)'];
+  useEffect(() => {
+    if (tableHeaders.length === 0) setTableHeaders(DEFAULT_HEADERS);
+    if (tableRows.length === 0) setTableRows(Array.from({ length: 3 }, () => Array(DEFAULT_HEADERS.length).fill('')));
+  }, [tableHeaders.length, tableRows.length]);
+
+  const fieldKeyToBoxKey = (k: string) => `field.${k}`;
+  const tableKey = (r: number, c: number) => `table.r${r}.c${c}`;
+
+  const ensureBox = (key: string) => {
+    setBoxes((prev) => {
+      if (prev[key]) return prev;
+      // random position/size within 1024x768 base
+      const w = 180, h = 36;
+      const x = Math.max(10, Math.min(1024 - w - 10, Math.floor(Math.random() * 800)));
+      const y = Math.max(10, Math.min(768 - h - 10, Math.floor(Math.random() * 600)));
+      return { ...prev, [key]: { x, y, w, h } };
+    });
+  };
+
+  const focusBox = (key: string) => {
+    ensureBox(key);
+    setActiveKey(key);
+    const cont = containerRef.current;
+    const b = boxes[key];
+    if (cont && b) {
+      // center scroll around the box coordinates in our base space
+      const targetX = b.x + b.w / 2 - cont.clientWidth / 2;
+      const targetY = b.y + b.h / 2 - cont.clientHeight / 2;
+      cont.scrollTo({ left: Math.max(0, targetX), top: Math.max(0, targetY), behavior: 'smooth' });
+    }
+  };
+
+  const startDragRef = useRef<{ key: string; dx: number; dy: number } | null>(null);
+  const onBoxMouseDown = (e: React.MouseEvent, key: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const b = boxes[key];
+    if (!b) return;
+    const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
+    startDragRef.current = { key, dx: e.clientX - (rect.left + b.x), dy: e.clientY - (rect.top + b.y) };
+  };
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!startDragRef.current) return;
+      const cont = containerRef.current;
+      if (!cont) return;
+      const rect = cont.getBoundingClientRect();
+      const key = startDragRef.current.key;
+      const x = e.clientX - rect.left - startDragRef.current.dx;
+      const y = e.clientY - rect.top - startDragRef.current.dy;
+      setBoxes((prev) => ({ ...prev, [key]: { ...prev[key], x: Math.max(0, Math.min(1024 - prev[key].w, x)), y: Math.max(0, Math.min(768 - prev[key].h, y)) } }));
+    };
+    const onUp = () => { startDragRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, [boxes]);
   return (
     <div className="container py-6">
       <Helmet>

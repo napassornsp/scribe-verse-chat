@@ -324,13 +324,15 @@ export default function OCRHistory() {
                               </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button
-                                    className="ml-2 p-1 rounded hover:bg-muted"
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="ml-2 z-10"
                                     aria-label="Item actions"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                   >
                                     <MoreVertical className="h-4 w-4" />
-                                  </button>
+                                  </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={async (e) => {
