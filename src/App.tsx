@@ -44,6 +44,8 @@ const App = () => (
                <Route path="/ocr/bill" element={<OCRBill />} />
                <Route path="/ocr/bank" element={<OCRBank />} />
                <Route path="/ocr/history" element={<OCRHistory />} />
+               <Route path="/ocr/bill/:id" element={<(await import('./pages/ocr/BillDetail')).default />} />
+               <Route path="/ocr/bank/:id" element={<(await import('./pages/ocr/BankDetail')).default />} />
                {/* Vision AI */}
                <Route path="/vision/flower" element={<VisionFlower />} />
                <Route path="/vision/food" element={<VisionFood />} />

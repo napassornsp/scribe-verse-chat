@@ -20,6 +20,10 @@ export default function OCRBank() {
   const [scale, setScale] = useState(1);
   const [flipped, setFlipped] = useState(false);
 
+  const [analyzed, setAnalyzed] = useState(false);
+  const [extracted, setExtracted] = useState({ reference: "", date: "", bank: "", amount: "" });
+  const [memo, setMemo] = useState("");
+
 const title = useMemo(() => "OCR Processing - Bank", []);
 
   const navigate = useNavigate();
@@ -58,6 +62,24 @@ const title = useMemo(() => "OCR Processing - Bank", []);
     load();
   }, []);
 
+  useEffect(() => {
+    const reset = () => {
+      setFile(null);
+      setPreview(null);
+      setProcessing(false);
+      setScale(1);
+      setFlipped(false);
+      setAnalyzed(false);
+      setExtracted({ reference: "", date: "", bank: "", amount: "" });
+      setMemo("");
+    };
+    // @ts-ignore - CustomEvent typing
+    window.addEventListener("ocr:new", reset as any);
+    return () => {
+      // @ts-ignore - CustomEvent typing
+      window.removeEventListener("ocr:new", reset as any);
+    };
+  }, []);
   const onFile = (f: File | null) => {
     setFile(f);
     setPreview(f ? URL.createObjectURL(f) : null);
@@ -71,6 +93,7 @@ const analyze = async () => {
     setProcessing(true);
     setTimeout(async () => {
       setProcessing(false);
+      setAnalyzed(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
         const uid = userData?.user?.id;
@@ -90,17 +113,26 @@ const analyze = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
       if (!uid) return;
-      const dataJson = {
-        reference: "CHK-123456",
-        date: "2024-03-15",
-        bank: "Bank of Example",
-        amount: "1,000.00",
-      } as const;
+      let fileUrl: string | null = null;
+      if (file) {
+        const path = `${uid}/${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from('ocr').upload(path, file);
+        if (!upErr) {
+          const { data: pub } = supabase.storage.from('ocr').getPublicUrl(path);
+          fileUrl = pub.publicUrl;
+        }
+      }
       await supabase.from('ocr_bank_extractions').insert({
         user_id: uid,
         filename: file?.name ?? null,
-        file_url: null,
-        data: dataJson as any
+        file_url: fileUrl,
+        data: {
+          reference: extracted.reference,
+          date: extracted.date,
+          bank: extracted.bank,
+          amount: extracted.amount,
+          memo,
+        } as any,
       });
       toast({ title: 'Saved', description: 'Bank extraction saved to history.' });
     } catch (e) {
@@ -132,7 +164,6 @@ const analyze = async () => {
           </SelectContent>
         </Select>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="secondary">Bill: {billCredits ?? "—"} / {billMax ?? "—"}</Badge>
           <Badge variant="secondary">Bank: {bankCredits ?? "—"} / {bankMax ?? "—"}</Badge>
         </div>
       </header>
@@ -187,12 +218,12 @@ const analyze = async () => {
               </TabsList>
               <TabsContent value="structured" className="space-y-3 mt-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Reference" defaultValue="CHK-123456" />
-                  <Input placeholder="Date" defaultValue="2024-03-15" />
-                  <Input placeholder="Bank" defaultValue="Bank of Example" />
-                  <Input placeholder="Amount" defaultValue="1,000.00" />
+                  <Input placeholder="Reference" value={extracted.reference} onChange={(e) => setExtracted((s) => ({ ...s, reference: e.target.value }))} />
+                  <Input placeholder="Date" value={extracted.date} onChange={(e) => setExtracted((s) => ({ ...s, date: e.target.value }))} />
+                  <Input placeholder="Bank" value={extracted.bank} onChange={(e) => setExtracted((s) => ({ ...s, bank: e.target.value }))} />
+                  <Input placeholder="Amount" value={extracted.amount} onChange={(e) => setExtracted((s) => ({ ...s, amount: e.target.value }))} />
                 </div>
-                <Textarea placeholder="Memo or Notes" defaultValue="Memo: Payroll" />
+                <Textarea placeholder="Memo or Notes" value={memo} onChange={(e) => setMemo(e.target.value)} />
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
                 <div className="flex gap-2">
                   <Button>Approve File</Button>

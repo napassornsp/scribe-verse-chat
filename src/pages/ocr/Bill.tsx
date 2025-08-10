@@ -20,6 +20,10 @@ export default function OCRBill() {
   const [scale, setScale] = useState(1);
   const [flipped, setFlipped] = useState(false);
 
+  const [analyzed, setAnalyzed] = useState(false);
+  const [extracted, setExtracted] = useState({ bill_no: "", date: "", vendor: "", total: "" });
+  const [notes, setNotes] = useState("");
+
 const title = useMemo(() => "OCR Processing - Bill", []);
   const navigate = useNavigate();
   const [billCredits, setBillCredits] = useState<number | null>(null);
@@ -57,12 +61,27 @@ const title = useMemo(() => "OCR Processing - Bill", []);
     load();
   }, []);
 
+  useEffect(() => {
+    const reset = () => {
+      setFile(null);
+      setPreview(null);
+      setProcessing(false);
+      setScale(1);
+      setFlipped(false);
+      setAnalyzed(false);
+      setExtracted({ bill_no: "", date: "", vendor: "", total: "" });
+      setNotes("");
+    };
+    // @ts-ignore
+    window.addEventListener("ocr:new", reset as any);
+    return () => window.removeEventListener("ocr:new", reset as any);
+  }, []);
   const onFile = (f: File | null) => {
     setFile(f);
     setPreview(f ? URL.createObjectURL(f) : null);
   };
 
-const analyze = async () => {
+  const analyze = async () => {
     if (billCredits !== null && billCredits <= 0) {
       toast({ title: 'Not enough credits', description: 'You have no Bill credits left this month.' });
       return;
@@ -70,6 +89,7 @@ const analyze = async () => {
     setProcessing(true);
     setTimeout(async () => {
       setProcessing(false);
+      setAnalyzed(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
         const uid = userData?.user?.id;
@@ -89,51 +109,28 @@ const analyze = async () => {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
       if (!uid) return;
-      const template = {
-        "ชื่อผู้ซื้อภาษาไทย (buyer_name_thai)": "",
-        "ชื่อผู้ซื้อภาษาอังกฤษ (buyer_name_eng)": "",
-        "สาขาผู้ซื้อ (buyer_branch)": "",
-        "ที่อยู่ผู้ซื้อภาษาไทย (buyer_address_thai)": "",
-        "ที่อยู่ผู้ซื้อภาษาอังกฤษ (buyer_address_eng)": "",
-        "หมายเลขภาษีผู้ซื้อ (buyer_vat_number)": "",
-        "ชื่อผู้ขายภาษาไทย (seller_name_thai)": "",
-        "ชื่อผู้ขายภาษาอังกฤษ (seller_name_eng)": "",
-        "สาขาผู้ขาย (seller_branch)": "",
-        "ที่อยู่ผู้ขายภาษาไทย (seller_address_thai)": "",
-        "ที่อยู่ผู้ขายภาษาอังกฤษ (seller_address_eng)": "",
-        "หมายเลขภาษีผู้ขาย (seller_vat_number)": "",
-        "ประเภทเอกสาร (Document type)": "",
-        "หมายเลขใบเอกสาร (Doc_number)": "",
-        "วันที่ของเอกสาร (Doc_date)": "",
-        "ตาราง (Table)": [],
-        "จำนวนเงินส่วนลด (discount_amount)": "",
-        "ยอดรวมก่อนภาษี (sub_total)": "",
-        "เปอร์เซ็นต์ภาษีมูลค่าเพิ่ม (vat_%)": "",
-        "จำนวนเงินภาษีมูลค่าเพิ่ม (vat_amount)": "",
-        "ยอดรวมสุทธิ (total_due_amount)": "",
-        "ยอดรวมตัวอักษร (text_amount)": "",
-        "สกุลเงิน (currency)": "",
-        "เปอร์เซ็นต์ภาษีหัก ณ ที่จ่าย (WHT_%)": "",
-        "จำนวนเงินภาษีหัก ณ ที่จ่าย (WHT_amount)": "",
-        "เบอร์แฟกซ์ผู้ขาย (seller_fax_number)": "",
-        "เบอร์แฟกซ์ผู้ซื้อ (buyer_fax_number)": "",
-        "เบอร์โทรศัพท์ผู้ขาย (seller_phone)": "",
-        "เบอร์โทรศัพท์ผู้ซื้อ (buyer_phone)": "",
-        "รหัสลูกค้า (client_id)": "",
-        "วันครบกำหนดชำระเงิน (payment_due_date)": "",
-        "หมายเลขคำสั่งซื้อ (po_number)": "",
-        "อีเมลผู้ขาย (seller_email)": "",
-        "เว็บไซต์ผู้ขาย (seller_website)": "",
-        "ที่อยู่จัดส่งสินค้า (shipto_address)": "",
-        "รหัสสินค้า (product_code)": "",
-        "อัตราแลกเปลี่ยน (exchange rate)": ""
-      } as const;
+
+      let fileUrl: string | null = null;
+      if (file) {
+        const path = `${uid}/${Date.now()}_${file.name}`;
+        const { error: upErr } = await supabase.storage.from('ocr').upload(path, file);
+        if (!upErr) {
+          const { data: pub } = supabase.storage.from('ocr').getPublicUrl(path);
+          fileUrl = pub.publicUrl;
+        }
+      }
 
       await supabase.from('ocr_bill_extractions').insert({
         user_id: uid,
         filename: file?.name ?? null,
-        file_url: null,
-        data: template as any
+        file_url: fileUrl,
+        data: {
+          bill_no: extracted.bill_no,
+          date: extracted.date,
+          vendor: extracted.vendor,
+          total: extracted.total,
+          notes,
+        } as any,
       });
       toast({ title: 'Saved', description: 'Bill extraction saved to history.' });
     } catch (e) {
@@ -165,7 +162,6 @@ const analyze = async () => {
         </Select>
         <div className="ml-auto flex items-center gap-2">
           <Badge variant="secondary">Bill: {billCredits ?? "—"} / {billMax ?? "—"}</Badge>
-          <Badge variant="secondary">Bank: {bankCredits ?? "—"} / {bankMax ?? "—"}</Badge>
         </div>
       </header>
 
@@ -219,12 +215,12 @@ const analyze = async () => {
               </TabsList>
               <TabsContent value="structured" className="space-y-3 mt-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Bill Number" defaultValue="INV-2024-001" />
-                  <Input placeholder="Date" defaultValue="2024-03-15" />
-                  <Input placeholder="Vendor" defaultValue="Electric Company" />
-                  <Input placeholder="Total Amount" defaultValue="75.90" />
+                  <Input placeholder="Bill Number" value={extracted.bill_no} onChange={(e) => setExtracted((s) => ({ ...s, bill_no: e.target.value }))} />
+                  <Input placeholder="Date" value={extracted.date} onChange={(e) => setExtracted((s) => ({ ...s, date: e.target.value }))} />
+                  <Input placeholder="Vendor" value={extracted.vendor} onChange={(e) => setExtracted((s) => ({ ...s, vendor: e.target.value }))} />
+                  <Input placeholder="Total Amount" value={extracted.total} onChange={(e) => setExtracted((s) => ({ ...s, total: e.target.value }))} />
                 </div>
-                <Textarea placeholder="Address or Notes" defaultValue="123 Main St, City, State 12345" />
+                <Textarea placeholder="Address or Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
                 <div className="flex gap-2">
                   <Button>Approve File</Button>

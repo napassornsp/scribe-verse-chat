@@ -37,6 +37,7 @@ import service from "@/services/backend";
 import type { Chat } from "@/services/types";
 import useAuthSession from "@/hooks/useAuthSession";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from "react-router-dom";
 
 interface AppSidebarProps {
   chats: Chat[];
@@ -52,6 +53,8 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user } = useAuthSession();
+  const location = useLocation();
+  const isOcr = location.pathname.startsWith("/ocr");
 
   type OcrItem = { id: string; type: "bill" | "bank"; filename: string | null; created_at: string };
   const [ocrItems, setOcrItems] = useState<OcrItem[]>([]);
@@ -179,48 +182,56 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={onNewChat}
-                  tooltip={{ children: "New Chat", hidden: false }}
+                  onClick={() => {
+                    if (isOcr) {
+                      window.dispatchEvent(new CustomEvent("ocr:new"));
+                    } else {
+                      onNewChat();
+                    }
+                  }}
+                  tooltip={{ children: isOcr ? "New Image" : "New Chat", hidden: false }}
                   className="overflow-hidden bg-gradient-to-r from-primary to-accent text-primary-foreground hover:brightness-110"
                 >
                   <Plus />
-                  {!collapsed && <span className="font-medium">New Chat</span>}
+                  {!collapsed && <span className="font-medium">{isOcr ? "New Image" : "New Chat"}</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          {!collapsed && <SidebarGroupLabel>OCR History</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {ocrItems.length === 0 ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled className="opacity-60">No history</SidebarMenuButton>
-                </SidebarMenuItem>
-              ) : (
-                ocrItems.map((item) => (
-                  <SidebarMenuItem key={`${item.type}-${item.id}`}>
-                    <SidebarMenuButton
-                      tooltip={{ children: item.filename || (item.type === "bill" ? "Bill" : "Bank"), hidden: false }}
-                      className="overflow-hidden"
-                      onClick={() => (window.location.href = "/ocr/history")}
-                    >
-                      <FileText />
-                      {!collapsed && <span className="truncate">{item.filename || (item.type === "bill" ? "Bill" : "Bank")}</span>}
-                      {!collapsed && <Badge variant="outline" className="ml-auto capitalize">{item.type}</Badge>}
-                    </SidebarMenuButton>
+        {isOcr && (
+          <SidebarGroup>
+            {!collapsed && <SidebarGroupLabel>OCR History</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ocrItems.length === 0 ? (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton disabled className="opacity-60">No history</SidebarMenuButton>
                   </SidebarMenuItem>
-                ))
-              )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                ) : (
+                  ocrItems.map((item) => (
+                    <SidebarMenuItem key={`${item.type}-${item.id}`}>
+                      <SidebarMenuButton
+                        tooltip={{ children: item.filename || (item.type === "bill" ? "Bill" : "Bank"), hidden: false }}
+                        className="overflow-hidden"
+                        onClick={() => (window.location.href = `/ocr/${item.type}/${item.id}`)}
+                      >
+                        <FileText />
+                        {!collapsed && <span className="truncate">{item.filename || (item.type === "bill" ? "Bill" : "Bank")}</span>}
+                        {!collapsed && <Badge variant="outline" className="ml-auto capitalize">{item.type}</Badge>}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarSeparator />
 
-        {!collapsed && (
+        {!collapsed && !isOcr && (
             <SidebarGroup className="min-h-0 flex-1 overflow-hidden">
             <SidebarGroupLabel>History</SidebarGroupLabel>
             <SidebarGroupContent>
