@@ -24,6 +24,18 @@ export default function Help() {
     }
     setSending(true);
     try {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) {
+        toast({ title: "Sign in required", description: "Please sign in to send a help request." });
+        setSending(false);
+        return;
+      }
+
+      // Record the help request in Supabase
+      await supabase.from("help_requests").insert({ user_id: uid, subject, message });
+
+      // Also send to support function (email/automation)
       const { error } = await supabase.functions.invoke("contact-support", {
         body: { name, email, subject, message },
       });

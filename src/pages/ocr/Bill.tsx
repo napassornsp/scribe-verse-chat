@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,19 +72,40 @@ export default function OCRBill() {
   }, []);
 
   useEffect(() => {
-    const reset = () => {
-      setFile(null);
-      setPreview(null);
-      setProcessing(false);
-      setScale(1);
-      setFlipped(false);
-      setAnalyzed(false);
-      setExtracted({ bill_no: "", date: "", vendor: "", total: "" });
-      setNotes("");
+    const handler = () => {
+      (async () => {
+        try {
+          // Auto-save current extraction to history if there is content
+          const hasContent = !!(file || extracted.bill_no || extracted.date || extracted.vendor || extracted.total || notes);
+          if (hasContent) {
+            await saveBill();
+            window.dispatchEvent(new CustomEvent('ocr:refresh'));
+          }
+          // Create a new chat for this session
+          const { data: auth } = await supabase.auth.getUser();
+          const uid = auth?.user?.id;
+          if (uid) {
+            const chatTitle = file?.name ? `Bill: ${file.name}` : 'New OCR Bill';
+            await supabase.from('chats').insert({ user_id: uid, title: chatTitle });
+          }
+        } catch (e) {
+          console.error('New image flow (bill) failed', e);
+        } finally {
+          setFile(null);
+          setPreview(null);
+          setProcessing(false);
+          setScale(1);
+          setFlipped(false);
+          setAnalyzed(false);
+          setExtracted({ bill_no: "", date: "", vendor: "", total: "" });
+          setNotes("");
+          setSavedId(null);
+        }
+      })();
     };
     // @ts-ignore
-    window.addEventListener("ocr:new", reset as any);
-    return () => window.removeEventListener("ocr:new", reset as any);
+    window.addEventListener("ocr:new", handler as any);
+    return () => window.removeEventListener("ocr:new", handler as any);
   }, []);
   const onFile = (f: File | null) => {
     setFile(f);
@@ -261,11 +282,15 @@ export default function OCRBill() {
                 <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
               <TabsContent value="structured" className="space-y-3 mt-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
                   <Input placeholder="Bill Number" value={extracted.bill_no} onChange={(e) => setExtracted((s) => ({ ...s, bill_no: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Bill Number (bill_no)</div>
                   <Input placeholder="Date" value={extracted.date} onChange={(e) => setExtracted((s) => ({ ...s, date: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Date (date)</div>
                   <Input placeholder="Vendor" value={extracted.vendor} onChange={(e) => setExtracted((s) => ({ ...s, vendor: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">ชื่อผู้ซื้อภาษาไทย (buyer_name_thai)</div>
                   <Input placeholder="Total Amount" value={extracted.total} onChange={(e) => setExtracted((s) => ({ ...s, total: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Total Amount (total)</div>
                 </div>
                 <Textarea placeholder="Address or Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>

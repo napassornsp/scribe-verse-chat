@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,21 +73,40 @@ export default function OCRBank() {
   }, []);
 
   useEffect(() => {
-    const reset = () => {
-      setFile(null);
-      setPreview(null);
-      setProcessing(false);
-      setScale(1);
-      setFlipped(false);
-      setAnalyzed(false);
-      setExtracted({ reference: "", date: "", bank: "", amount: "" });
-      setMemo("");
+    const handler = () => {
+      (async () => {
+        try {
+          const hasContent = !!(file || extracted.reference || extracted.date || extracted.bank || extracted.amount || memo);
+          if (hasContent) {
+            await saveBank();
+            window.dispatchEvent(new CustomEvent('ocr:refresh'));
+          }
+          const { data: auth } = await supabase.auth.getUser();
+          const uid = auth?.user?.id;
+          if (uid) {
+            const chatTitle = file?.name ? `Bank: ${file.name}` : 'New OCR Bank';
+            await supabase.from('chats').insert({ user_id: uid, title: chatTitle });
+          }
+        } catch (e) {
+          console.error('New image flow (bank) failed', e);
+        } finally {
+          setFile(null);
+          setPreview(null);
+          setProcessing(false);
+          setScale(1);
+          setFlipped(false);
+          setAnalyzed(false);
+          setExtracted({ reference: "", date: "", bank: "", amount: "" });
+          setMemo("");
+          setSavedId(null);
+        }
+      })();
     };
     // @ts-ignore - CustomEvent typing
-    window.addEventListener("ocr:new", reset as any);
+    window.addEventListener("ocr:new", handler as any);
     return () => {
       // @ts-ignore - CustomEvent typing
-      window.removeEventListener("ocr:new", reset as any);
+      window.removeEventListener("ocr:new", handler as any);
     };
   }, []);
   const onFile = (f: File | null) => {
@@ -261,11 +280,15 @@ const analyze = async () => {
                 <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
               <TabsContent value="structured" className="space-y-3 mt-4">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-[1fr_auto] gap-3 items-center">
                   <Input placeholder="Reference" value={extracted.reference} onChange={(e) => setExtracted((s) => ({ ...s, reference: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Reference (reference)</div>
                   <Input placeholder="Date" value={extracted.date} onChange={(e) => setExtracted((s) => ({ ...s, date: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Date (date)</div>
                   <Input placeholder="Bank" value={extracted.bank} onChange={(e) => setExtracted((s) => ({ ...s, bank: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Bank (bank)</div>
                   <Input placeholder="Amount" value={extracted.amount} onChange={(e) => setExtracted((s) => ({ ...s, amount: e.target.value }))} />
+                  <div className="text-sm text-muted-foreground text-right">Amount (amount)</div>
                 </div>
                 <Textarea placeholder="Memo or Notes" value={memo} onChange={(e) => setMemo(e.target.value)} />
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>

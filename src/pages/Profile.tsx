@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import useAuthSession from "@/hooks/useAuthSession";
+import { Pencil } from "lucide-react";
 
 export default function Profile() {
   const canonical = typeof window !== "undefined" ? window.location.origin + "/profile" : "";
@@ -27,6 +28,9 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPwd, setChangingPwd] = useState(false);
+  const [editAccount, setEditAccount] = useState(false);
+  const [editContact, setEditContact] = useState(false);
+  const [editSecurity, setEditSecurity] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -110,17 +114,20 @@ export default function Profile() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Account</CardTitle>
+              <Button variant="ghost" size="icon" aria-label="Edit account" onClick={() => setEditAccount((v) => !v)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12 text-xl">
                   <AvatarFallback>{emoji}</AvatarFallback>
                 </Avatar>
-                <Input placeholder="Profile emoji (e.g. 😀)" value={emoji} onChange={(e) => setEmoji(e.target.value)} />
+                <Input placeholder="Profile emoji (e.g. 😀)" value={emoji} onChange={(e) => setEmoji(e.target.value)} readOnly={!editAccount} />
               </div>
-              <Input placeholder="Display name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input placeholder="Display name" value={name} onChange={(e) => setName(e.target.value)} readOnly={!editAccount} />
               <div className="flex items-center gap-2">
                 <Input type="email" placeholder="Email" value={email} readOnly />
                 <Badge variant="secondary">{user?.email_confirmed_at ? "Verified" : "Unverified"}</Badge>
@@ -131,16 +138,19 @@ export default function Profile() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Contact</CardTitle>
+              <Button variant="ghost" size="icon" aria-label="Edit contact" onClick={() => setEditContact((v) => !v)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Input placeholder="Company (optional)" value={company} onChange={(e) => setCompany(e.target.value)} />
+              <Input placeholder="Company (optional)" value={company} onChange={(e) => setCompany(e.target.value)} readOnly={!editContact} />
               <div className="flex items-center gap-2">
-                <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <Input placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} readOnly={!editContact} />
                 <Badge variant="secondary">{phoneVerified ? "Verified" : "Unverified"}</Badge>
               </div>
-              <Input placeholder="Location (optional)" value={location} onChange={(e) => setLocation(e.target.value)} />
+              <Input placeholder="Location (optional)" value={location} onChange={(e) => setLocation(e.target.value)} readOnly={!editContact} />
               <Button onClick={save} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
             </CardContent>
           </Card>
