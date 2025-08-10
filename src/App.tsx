@@ -12,6 +12,9 @@ import Notifications from "./pages/Notifications";
 import Help from "./pages/Help";
 import Profile from "./pages/Profile";
 import Pricing from "./pages/Pricing";
+import OCR from "./pages/OCR";
+import VisionAI from "./pages/VisionAI";
+import SidebarShell from "./components/layout/SidebarShell";
 
 const queryClient = new QueryClient();
 
@@ -24,14 +27,20 @@ const App = () => (
         <BrowserRouter>
            <Routes>
              <Route path="/" element={<Index />} />
-             <Route path="/home" element={<Home />} />
-             <Route path="/notifications" element={<Notifications />} />
-             <Route path="/help" element={<Help />} />
+             <Route path="/auth" element={<Auth />} />
              <Route path="/login" element={<Auth />} />
              <Route path="/register" element={<Auth />} />
-             <Route path="/profile" element={<Profile />} />
-             <Route path="/pricing" element={<Pricing />} />
-             <Route path="/auth" element={<Auth />} />
+
+             <Route element={<SidebarShell />}>
+               <Route path="/home" element={<Home />} />
+               <Route path="/notifications" element={<Notifications />} />
+               <Route path="/help" element={<Help />} />
+               <Route path="/profile" element={<Profile />} />
+               <Route path="/pricing" element={<Pricing />} />
+               <Route path="/ocr" element={<OCR />} />
+               <Route path="/vision" element={<VisionAI />} />
+             </Route>
+
              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
              <Route path="*" element={<NotFound />} />
            </Routes>

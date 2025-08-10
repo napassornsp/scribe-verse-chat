@@ -120,19 +120,19 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Chatbot", hidden: false }} isActive size="default" className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "Chatbot", hidden: false }} size="default" className="overflow-hidden" onClick={() => (window.location.href = "/")}>
                   <MessageSquare />
                   {!collapsed && <span>Chatbot</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "OCR", hidden: false }} disabled className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "OCR", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/ocr")}>
                   <FileText />
                   {!collapsed && <span>OCR</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Vision AI", hidden: false }} disabled className="overflow-hidden">
+                <SidebarMenuButton tooltip={{ children: "Vision AI", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/vision")}>
                   <Eye />
                   {!collapsed && <span>Vision AI</span>}
                 </SidebarMenuButton>
@@ -339,11 +339,11 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                         <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/profile")}>
                           <User className="h-4 w-4" /> User Profile
                         </button>
-                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => {}}>
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/notifications")}>
                           <Bell className="h-4 w-4" /> Notifications
                           <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs px-1">3</span>
                         </button>
-                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => window.open("https://docs.lovable.dev/", "_blank")}>
+                        <button className="flex items-center gap-2 px-2 py-2 rounded hover:bg-muted" onClick={() => (window.location.href = "/help")}>
                           <HelpCircle className="h-4 w-4" /> Help
                         </button>
                         <div className="my-1 border-t" />
