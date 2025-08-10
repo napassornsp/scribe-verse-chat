@@ -73,6 +73,39 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          created_at: string
+          credits_v1: number | null
+          credits_v2: number | null
+          credits_v3: number | null
+          id: string
+          name: string
+          price_cents: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits_v1?: number | null
+          credits_v2?: number | null
+          credits_v3?: number | null
+          id?: string
+          name: string
+          price_cents?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits_v1?: number | null
+          credits_v2?: number | null
+          credits_v3?: number | null
+          id?: string
+          name?: string
+          price_cents?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -84,6 +117,7 @@ export type Database = {
           location: string | null
           phone: string | null
           phone_verified: boolean | null
+          plan_id: string | null
           updated_at: string
         }
         Insert: {
@@ -96,6 +130,7 @@ export type Database = {
           location?: string | null
           phone?: string | null
           phone_verified?: boolean | null
+          plan_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -108,12 +143,22 @@ export type Database = {
           location?: string | null
           phone?: string | null
           phone_verified?: boolean | null
+          plan_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_credits: {
         Row: {
+          last_reset_month: string
           updated_at: string
           user_id: string
           v1: number
@@ -121,6 +166,7 @@ export type Database = {
           v3: number
         }
         Insert: {
+          last_reset_month?: string
           updated_at?: string
           user_id: string
           v1?: number
@@ -128,6 +174,7 @@ export type Database = {
           v3?: number
         }
         Update: {
+          last_reset_month?: string
           updated_at?: string
           user_id?: string
           v1?: number
@@ -141,7 +188,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_monthly_credits: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          v1: number
+          v2: number
+          v3: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
