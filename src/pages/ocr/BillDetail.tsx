@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import BillAnnotator, { BillAnnotatorHandle } from "@/components/ocr/BillAnnotator";
 export default function BillDetail() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,9 @@ export default function BillDetail() {
   const [tableHeaders, setTableHeaders] = useState<string[]>([]);
   const [tableRows, setTableRows] = useState<string[][]>([]);
   const [editKey, setEditKey] = useState<string | null>(null);
+  const annotatorRef = useRef<BillAnnotatorHandle>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editValue, setEditValue] = useState("");
 
   const FIELD_LIST: { key: string; label: string }[] = [
     { key: 'buyer_name_thai', label: 'ชื่อผู้ซื้อภาษาไทย (buyer_name_thai)' },
@@ -253,6 +257,33 @@ export default function BillDetail() {
     }
   };
 
+  const getValueForKey = (key: string): string => {
+    if (key.startsWith('field.')) {
+      const f = key.slice(6);
+      return fieldValues[f] ?? '';
+    }
+    const m = key.match(/^table\.r(\d+)\.c(\d+)$/);
+    if (m) {
+      const r = parseInt(m[1], 10);
+      const c = parseInt(m[2], 10);
+      return tableRows[r]?.[c] ?? '';
+    }
+    return '';
+  };
+
+  const setValueForKey = (key: string, val: string) => {
+    if (key.startsWith('field.')) {
+      const f = key.slice(6);
+      setFieldValues((prev) => ({ ...prev, [f]: val }));
+      return;
+    }
+    const m = key.match(/^table\.r(\d+)\.c(\d+)$/);
+    if (m) {
+      const r = parseInt(m[1], 10);
+      const c = parseInt(m[2], 10);
+      setTableRows((rows) => rows.map((rr, ri) => ri === r ? rr.map((vv, ci) => ci === c ? val : vv) : rr));
+    }
+  };
   const startDragRef = useRef<{ key: string; dx: number; dy: number } | null>(null);
   const onBoxMouseDown = (e: React.MouseEvent, key: string) => {
     e.preventDefault();
@@ -310,19 +341,25 @@ export default function BillDetail() {
               <Button variant="outline" size="icon" onClick={resetView} aria-label="Reset view"><RefreshCw className="h-4 w-4" /></Button>
               <span className="text-xs text-muted-foreground ml-2">Zoom: {(scale * 100).toFixed(0)}%</span>
             </div>
-            <div className="aspect-[4/3] rounded-md border overflow-auto bg-muted/30 flex items-center justify-center">
-              {preview ? (
-                <img
-                  src={preview}
-                  alt="Bill document"
-                  loading="lazy"
-                  style={{ transform: `${flipped ? "scaleX(-1) " : ""}scale(${scale})`, transformOrigin: "center center" }}
-                  className="object-contain"
-                />
-              ) : (
-                <div className="text-sm text-muted-foreground">No image available</div>
-              )}
-            </div>
+            <BillAnnotator
+              ref={annotatorRef}
+              imageUrl={preview}
+              scale={scale}
+              flipped={flipped}
+              boxes={boxes}
+              activeKey={activeKey}
+              onActiveKeyChange={(k) => {
+                setActiveKey(k);
+                const el = document.getElementById(`field-${k}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }}
+              onBoxesChange={setBoxes}
+              onDoubleEdit={(k) => {
+                setEditKey(k);
+                setEditValue(getValueForKey(k));
+                setEditOpen(true);
+              }}
+            />
             <div className="flex items-center gap-2">
               <Input type="file" accept="image/*,.pdf" onChange={(e) => onFile(e.target.files?.[0] ?? null)} />
               {file && (
@@ -346,18 +383,55 @@ export default function BillDetail() {
                 <TabsTrigger value="raw">Raw Data</TabsTrigger>
               </TabsList>
               <TabsContent value="structured" className="space-y-3 mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Input placeholder="Bill Number" value={extracted.bill_no} onChange={(e) => setExtracted((s) => ({ ...s, bill_no: e.target.value }))} />
-                  <Input placeholder="Date" value={extracted.date} onChange={(e) => setExtracted((s) => ({ ...s, date: e.target.value }))} />
-                  <Input placeholder="Vendor" value={extracted.vendor} onChange={(e) => setExtracted((s) => ({ ...s, vendor: e.target.value }))} />
-                  <Input placeholder="Total Amount" value={extracted.total} onChange={(e) => setExtracted((s) => ({ ...s, total: e.target.value }))} />
-                </div>
-                <Textarea placeholder="Address or Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
-                <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
-                <div className="flex gap-2">
-                  <Button onClick={approve}>Approve File</Button>
-                  <Button variant="secondary" onClick={save}>Save Data</Button>
-                  <Button variant="outline">Export</Button>
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {FIELD_LIST.map((f) => {
+                      const boxKey = fieldKeyToBoxKey(f.key);
+                      return (
+                        <div key={f.key} className="space-y-1">
+                          <label className="text-xs text-muted-foreground">{f.label}</label>
+                          <Input
+                            id={`field-${boxKey}`}
+                            value={fieldValues[f.key] ?? ""}
+                            onChange={(e) => setFieldValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                            onFocus={() => { ensureBox(boxKey); annotatorRef.current?.focusBox(boxKey); }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 text-sm font-medium">ตาราง (Table)</div>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tableHeaders.length}, minmax(0, 1fr))` }}>
+                      {tableHeaders.map((h, c) => (
+                        <Input key={`h-${c}`} value={h}
+                          onChange={(e) => setTableHeaders((th) => th.map((x, idx) => (idx === c ? e.target.value : x)))} />
+                      ))}
+                      {tableRows.map((row, r) => (
+                        row.map((val, c) => {
+                          const k = tableKey(r, c);
+                          return (
+                            <Input
+                              key={`r${r}c${c}`}
+                              id={`field-${k}`}
+                              value={val}
+                              onChange={(e) => setTableRows((rows) => rows.map((rr, ri) => (ri === r ? rr.map((vv, ci) => (ci === c ? e.target.value : vv)) : rr)))}
+                              onFocus={() => { ensureBox(k); annotatorRef.current?.focusBox(k); }}
+                            />
+                          );
+                        })
+                      ))}
+                    </div>
+                  </div>
+
+                  <Textarea placeholder="Address or Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                  <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
+                  <div className="flex gap-2">
+                    <Button onClick={approve}>Approve File</Button>
+                    <Button variant="secondary" onClick={save}>Save Data</Button>
+                    <Button variant="outline">Export</Button>
+                  </div>
                 </div>
               </TabsContent>
               <TabsContent value="raw" className="mt-4">
