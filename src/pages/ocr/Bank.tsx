@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ZoomIn, ZoomOut, RefreshCw, FlipHorizontal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
 export default function OCRBank() {
@@ -24,6 +25,7 @@ const title = useMemo(() => "OCR Processing - Bank", []);
   const navigate = useNavigate();
   const [billCredits, setBillCredits] = useState<number | null>(null);
   const [bankCredits, setBankCredits] = useState<number | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +44,10 @@ const title = useMemo(() => "OCR Processing - Bank", []);
   };
 
 const analyze = async () => {
+    if (bankCredits !== null && bankCredits <= 0) {
+      toast({ title: 'Not enough credits', description: 'You have no Bank credits left this month.' });
+      return;
+    }
     setProcessing(true);
     setTimeout(async () => {
       setProcessing(false);
@@ -55,8 +61,9 @@ const analyze = async () => {
         }
       } catch (e) {
         console.error('Failed to decrement bank credits', e);
+        toast({ title: 'Error', description: 'Could not update credits.' });
       }
-    }, 1200); // mock
+    }, 1200);
   };
   const saveBank = async () => {
     try {
@@ -75,8 +82,10 @@ const analyze = async () => {
         file_url: null,
         data: dataJson as any
       });
+      toast({ title: 'Saved', description: 'Bank extraction saved to history.' });
     } catch (e) {
       console.error('Failed to save bank extraction', e);
+      toast({ title: 'Save failed', description: 'Could not save bank extraction.' });
     }
   };
   const zoomIn = () => setScale((s) => Math.min(4, parseFloat((s + 0.25).toFixed(2))));
@@ -140,8 +149,8 @@ const analyze = async () => {
                 <Button variant="secondary" onClick={() => onFile(null)}>Reset</Button>
               )}
             </div>
-            <Button className="w-full" disabled={!file || processing} onClick={analyze}>
-              {processing ? "Processing..." : "Analyze"}
+            <Button className="w-full" disabled={!file || processing || (bankCredits !== null && bankCredits <= 0)} onClick={analyze}>
+              {processing ? "Processing..." : bankCredits !== null && bankCredits <= 0 ? "Out of credits" : "Analyze"}
             </Button>
           </CardContent>
         </Card>
