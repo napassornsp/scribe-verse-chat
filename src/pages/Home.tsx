@@ -13,9 +13,9 @@ export default function Home() {
       </Helmet>
 
       <header className="container py-8">
-        <h1 className="text-3xl font-bold text-foreground">Welcome to our AI Suite</h1>
+        <h1 className="text-3xl font-bold text-foreground">AI + Automation for Manufacturing</h1>
         <p className="text-muted-foreground mt-2 max-w-2xl">
-          Build smarter workflows with our Chatbot, OCR, and Vision AI modules. Clean, fast, and secure.
+          Streamline factory operations with our AI Suite: Chatbot copilots, OCR for documents, and Vision AI for visual inspection.
         </p>
         <div className="mt-6 flex gap-3">
           <Button onClick={() => (window.location.href = "/")}>Open Chat</Button>
@@ -26,10 +26,10 @@ export default function Home() {
       <section className="container grid gap-6 md:grid-cols-3 pb-10">
         <Card>
           <CardHeader>
-            <CardTitle>Chatbot</CardTitle>
+            <CardTitle>Chatbot Copilot</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Multi-version assistant for conversations and automation.
+            Assist technicians and operators with procedures, Q&A, and automation triggers.
           </CardContent>
         </Card>
         <Card>
@@ -37,7 +37,7 @@ export default function Home() {
             <CardTitle>OCR</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Extract text from documents and images quickly and accurately.
+            Extract data from work orders, invoices, and QC forms with high accuracy.
           </CardContent>
         </Card>
         <Card>
@@ -45,7 +45,7 @@ export default function Home() {
             <CardTitle>Vision AI</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Analyze and understand images for smarter insights.
+            Detect defects and track production using camera feeds and smart models.
           </CardContent>
         </Card>
       </section>

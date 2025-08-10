@@ -35,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import service from "@/services/backend";
 import type { Chat } from "@/services/types";
+import useAuthSession from "@/hooks/useAuthSession";
 
 interface AppSidebarProps {
   chats: Chat[];
@@ -49,6 +50,7 @@ interface AppSidebarProps {
 export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onDelete, loggedIn }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const { user } = useAuthSession();
 
   const groups = useMemo(() => {
     const now = new Date();
