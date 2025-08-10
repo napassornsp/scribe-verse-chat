@@ -126,13 +126,13 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "OCR", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/ocr")}>
+                <SidebarMenuButton tooltip={{ children: "OCR", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/ocr/bill")}>
                   <FileText />
                   {!collapsed && <span>OCR</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Vision AI", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/vision")}>
+                <SidebarMenuButton tooltip={{ children: "Vision AI", hidden: false }} className="overflow-hidden" onClick={() => (window.location.href = "/vision/flower")}>
                   <Eye />
                   {!collapsed && <span>Vision AI</span>}
                 </SidebarMenuButton>

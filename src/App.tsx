@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -12,9 +12,11 @@ import Notifications from "./pages/Notifications";
 import Help from "./pages/Help";
 import Profile from "./pages/Profile";
 import Pricing from "./pages/Pricing";
-import OCR from "./pages/OCR";
-import VisionAI from "./pages/VisionAI";
 import SidebarShell from "./components/layout/SidebarShell";
+import OCRBill from "./pages/ocr/Bill";
+import OCRBank from "./pages/ocr/Bank";
+import VisionFlower from "./pages/vision/Flower";
+import VisionFood from "./pages/vision/Food";
 
 const queryClient = new QueryClient();
 
@@ -37,9 +39,17 @@ const App = () => (
                <Route path="/help" element={<Help />} />
                <Route path="/profile" element={<Profile />} />
                <Route path="/pricing" element={<Pricing />} />
-               <Route path="/ocr" element={<OCR />} />
-               <Route path="/vision" element={<VisionAI />} />
+               {/* OCR */}
+               <Route path="/ocr/bill" element={<OCRBill />} />
+               <Route path="/ocr/bank" element={<OCRBank />} />
+               {/* Vision AI */}
+               <Route path="/vision/flower" element={<VisionFlower />} />
+               <Route path="/vision/food" element={<VisionFood />} />
              </Route>
+
+             {/* Redirect old routes to new defaults */}
+             <Route path="/ocr" element={<Navigate to="/ocr/bill" replace />} />
+             <Route path="/vision" element={<Navigate to="/vision/flower" replace />} />
 
              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
              <Route path="*" element={<NotFound />} />
