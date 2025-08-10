@@ -153,6 +153,59 @@ export default function BillDetail() {
     setTimeout(async () => {
       setProcessing(false);
       setAnalyzed(true);
+
+      // Seed demo boxes and values for a great editing experience
+      try {
+        const fk = (k: string) => `field.${k}`;
+        const tk = (r: number, c: number) => `table.r${r}.c${c}`;
+        const headers = ['ลำดับ', 'รายการสินค้า (Description)', 'จำนวนหน่วย (Quantity)', 'ราคาต่อหน่วย (Unit Price)', 'จำนวนเงิน (Amount)'];
+
+        // Only seed if nothing exists yet
+        setBoxes((prev) => {
+          if (Object.keys(prev).length > 0) return prev;
+          const seeded: Record<string, { x: number; y: number; w: number; h: number }> = {};
+          const fieldKeys = [
+            'buyer_name_thai', 'buyer_name_eng', 'buyer_branch', 'buyer_address_thai', 'buyer_address_eng', 'buyer_vat_number',
+            'seller_name_thai', 'seller_name_eng', 'seller_branch', 'seller_address_thai', 'seller_address_eng', 'seller_vat_number',
+            'document_type', 'doc_number', 'doc_date', 'discount_amount', 'sub_total', 'vat_percent', 'vat_amount', 'total_due_amount'
+          ];
+          fieldKeys.slice(0, 12).forEach((k, idx) => {
+            seeded[fk(k)] = { x: 48, y: 40 + idx * 44, w: 320, h: 32 };
+          });
+          // Table cells grid
+          for (let r = 0; r < 3; r++) {
+            for (let c = 0; c < headers.length; c++) {
+              seeded[tk(r, c)] = { x: 420 + c * 110, y: 380 + r * 40, w: 100, h: 30 };
+            }
+          }
+          return seeded;
+        });
+        setTableHeaders((th) => (th.length ? th : headers));
+        setTableRows((rows) => (rows.length ? rows : Array.from({ length: 3 }, (_, r) => headers.map((_, c) => `R${r + 1}C${c + 1}`))));
+        setFieldValues((fv) => (
+          Object.keys(fv).length ? fv : {
+            buyer_name_thai: 'บริษัท เอ บี ซี จำกัด',
+            buyer_name_eng: 'ABC Co., Ltd.',
+            buyer_branch: 'สำนักงานใหญ่',
+            buyer_address_thai: '123 ถนนสุขุมวิท กรุงเทพฯ',
+            buyer_address_eng: '123 Sukhumvit Rd, Bangkok',
+            buyer_vat_number: '0105551234567',
+            seller_name_thai: 'บริษัท ดี อี เอฟ จำกัด',
+            seller_name_eng: 'DEF Co., Ltd.',
+            seller_branch: 'สาขากรุงเทพ',
+            seller_address_thai: '456 ถนนพระราม 9 กรุงเทพฯ',
+            seller_address_eng: '456 Rama IX Rd, Bangkok',
+            seller_vat_number: '0105559876543',
+            document_type: 'Invoice',
+            doc_number: 'INV-2025-001',
+            doc_date: new Date().toISOString().slice(0, 10),
+            total_due_amount: '12,345.67',
+          }
+        ));
+      } catch (e) {
+        console.error('Seeding annotations failed', e);
+      }
+
       try {
         const { data: userData } = await supabase.auth.getUser();
         const uid = userData?.user?.id;
