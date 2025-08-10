@@ -84,17 +84,16 @@ export default function OCRHistory() {
                     items
                       .filter((i) => tab === "all" || i.type === tab)
                       .map((i) => (
-                        <article key={`${i.type}-${i.id}`} className="flex items-center gap-3 p-3">
+                        <a href={`/ocr/${i.type}/${i.id}`} key={`${i.type}-${i.id}`} className="flex items-center gap-3 p-3 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none">
                           <Badge variant="outline" className="shrink-0 capitalize">{i.type}</Badge>
                           <div className="min-w-0 flex-1">
                             <div className="text-sm font-medium truncate">{i.filename || (i.type === "bill" ? "Bill" : "Bank")} </div>
                             <div className="text-xs text-muted-foreground">{new Date(i.created_at).toLocaleString()}</div>
                           </div>
-                          {/* Simple preview of key fields */}
                           <div className="text-xs text-muted-foreground max-w-[40%] truncate">
                             {i.type === "bill" ? (i.data?.["หมายเลขใบเอกสาร (Doc_number)"] ?? "") : (i.data?.reference ?? "")}
                           </div>
-                        </article>
+                        </a>
                       ))
                   )}
                   {!loading && items.filter((i) => tab === "all" || i.type === tab).length === 0 && (

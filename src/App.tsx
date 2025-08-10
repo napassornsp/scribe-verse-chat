@@ -18,6 +18,8 @@ import OCRBank from "./pages/ocr/Bank";
 import VisionFlower from "./pages/vision/Flower";
 import VisionFood from "./pages/vision/Food";
 import OCRHistory from "./pages/OCRHistory";
+import BillDetail from "./pages/ocr/BillDetail";
+import BankDetail from "./pages/ocr/BankDetail";
 
 const queryClient = new QueryClient();
 
@@ -44,8 +46,8 @@ const App = () => (
                <Route path="/ocr/bill" element={<OCRBill />} />
                <Route path="/ocr/bank" element={<OCRBank />} />
                <Route path="/ocr/history" element={<OCRHistory />} />
-               <Route path="/ocr/bill/:id" element={<(await import('./pages/ocr/BillDetail')).default />} />
-               <Route path="/ocr/bank/:id" element={<(await import('./pages/ocr/BankDetail')).default />} />
+                <Route path="/ocr/bill/:id" element={<BillDetail />} />
+                <Route path="/ocr/bank/:id" element={<BankDetail />} />
                {/* Vision AI */}
                <Route path="/vision/flower" element={<VisionFlower />} />
                <Route path="/vision/food" element={<VisionFood />} />
