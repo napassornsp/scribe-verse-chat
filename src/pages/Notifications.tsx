@@ -14,7 +14,7 @@ export default function Notifications() {
   return (
     <main className="container py-8 min-h-svh">
       <Helmet>
-        <title>Notifications ({unread}) | Company</title>
+        <title>{`Notifications (${unread}) | Company`}</title>
         <meta name="description" content="View your latest notifications and updates." />
         <link rel="canonical" href={canonical} />
       </Helmet>

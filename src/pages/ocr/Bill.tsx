@@ -191,7 +191,7 @@ export default function OCRBill() {
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Company</title>
+        <title>{`${title} | Company`}</title>
         <meta name="description" content="Upload a bill and extract structured data with our OCR." />
         <link rel="canonical" href={canonical} />
       </Helmet>

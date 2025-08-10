@@ -30,7 +30,7 @@ const title = useMemo(() => "Flower Detection", []);
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Vision AI | Company</title>
+        <title>{`${title} | Vision AI | Company`}</title>
         <meta name="description" content="Analyze images for flower detection with Vision AI." />
         <link rel="canonical" href={canonical} />
       </Helmet>

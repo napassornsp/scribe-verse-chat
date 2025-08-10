@@ -173,7 +173,7 @@ export default function BankDetail() {
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Company</title>
+        <title>{`${title} | Company`}</title>
         <meta name="description" content="View and re-process saved bank OCR extraction." />
         <link rel="canonical" href={canonical} />
       </Helmet>

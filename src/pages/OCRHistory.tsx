@@ -259,7 +259,7 @@ export default function OCRHistory() {
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Company</title>
+        <title>{`${title} | Company`}</title>
         <meta name="description" content="View your OCR Bill and Bank extraction history in one place." />
         <link rel="canonical" href={canonical} />
       </Helmet>

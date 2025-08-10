@@ -32,7 +32,7 @@ export default function VisionAI() {
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Vision AI | Company</title>
+        <title>{`${title} | Vision AI | Company`}</title>
         <meta name="description" content="Analyze images with Vision AI for detection and classification." />
         <link rel="canonical" href={canonical} />
       </Helmet>

@@ -28,7 +28,7 @@ const title = useMemo(() => "Food Classification", []);
   return (
     <div className="container py-6">
       <Helmet>
-        <title>{title} | Vision AI | Company</title>
+        <title>{`${title} | Vision AI | Company`}</title>
         <meta name="description" content="Classify food items in images with Vision AI." />
         <link rel="canonical" href={canonical} />
       </Helmet>
