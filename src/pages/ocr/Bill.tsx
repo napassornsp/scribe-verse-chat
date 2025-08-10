@@ -105,8 +105,13 @@ export default function OCRBill() {
         const uid = userData?.user?.id;
         if (uid && billCredits !== null) {
           const newVal = Math.max(0, billCredits - 1);
-          await supabase.from('user_credits').update({ ocr_bill: newVal }).eq('user_id', uid);
-          setBillCredits(newVal);
+          const { data: updated, error } = await supabase
+            .from('user_credits')
+            .update({ ocr_bill: newVal })
+            .eq('user_id', uid)
+            .select('ocr_bill')
+            .single();
+          if (!error) setBillCredits(updated?.ocr_bill ?? newVal);
         }
       } catch (e) {
         console.error('Failed to decrement bill credits', e);

@@ -210,7 +210,7 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isOcr && (
+        {isOcr && !collapsed && (
           <SidebarGroup className="min-h-0 flex-1 overflow-hidden">
             {!collapsed && <SidebarGroupLabel>OCR History</SidebarGroupLabel>}
             <SidebarGroupContent>

@@ -109,8 +109,13 @@ const analyze = async () => {
         const uid = userData?.user?.id;
         if (uid && bankCredits !== null) {
           const newVal = Math.max(0, bankCredits - 1);
-          await supabase.from('user_credits').update({ ocr_bank: newVal }).eq('user_id', uid);
-          setBankCredits(newVal);
+          const { data: updated, error } = await supabase
+            .from('user_credits')
+            .update({ ocr_bank: newVal })
+            .eq('user_id', uid)
+            .select('ocr_bank')
+            .single();
+          if (!error) setBankCredits(updated?.ocr_bank ?? newVal);
         }
       } catch (e) {
         console.error('Failed to decrement bank credits', e);

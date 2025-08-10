@@ -21,6 +21,10 @@ export default function OCRHistory() {
   const title = useMemo(() => "OCR History", []);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [billCredits, setBillCredits] = useState<number | null>(null);
+  const [bankCredits, setBankCredits] = useState<number | null>(null);
+  const [billMax, setBillMax] = useState<number | null>(null);
+  const [bankMax, setBankMax] = useState<number | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -54,6 +58,44 @@ export default function OCRHistory() {
     load();
   }, []);
 
+  useEffect(() => {
+    const loadCredits = async () => {
+      try {
+        const { data, error } = await supabase.rpc('reset_monthly_ocr_credits');
+        if (!error && Array.isArray(data) && data.length) {
+          setBillCredits((data[0] as any)?.bill ?? null);
+          setBankCredits((data[0] as any)?.bank ?? null);
+        } else if (!error && data && (data as any).bill !== undefined) {
+          setBillCredits((data as any).bill ?? null);
+          setBankCredits((data as any).bank ?? null);
+        } else {
+          const { data: uc } = await supabase.from('user_credits').select('ocr_bill, ocr_bank').single();
+          if (uc) {
+            setBillCredits((uc as any).ocr_bill ?? null);
+            setBankCredits((uc as any).ocr_bank ?? null);
+          }
+        }
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          const { data: profile } = await supabase.from('profiles').select('plan_id').eq('id', uid).single();
+          const planId = (profile as any)?.plan_id;
+          if (planId) {
+            const { data: plan } = await supabase.from('plans').select('ocr_bill_limit, ocr_bank_limit').eq('id', planId).single();
+            setBillMax((plan as any)?.ocr_bill_limit ?? 12);
+            setBankMax((plan as any)?.ocr_bank_limit ?? 13);
+          } else {
+            setBillMax(12);
+            setBankMax(13);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load credits', e);
+      }
+    };
+    loadCredits();
+  }, []);
+
   return (
     <div className="container py-6">
       <Helmet>
@@ -65,7 +107,9 @@ export default function OCRHistory() {
       <header className="flex items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="secondary">Total: {items.length}</Badge>
+          <Badge variant="secondary">Bill: {billCredits ?? "—"} / {billMax ?? "—"}</Badge>
+          <Badge variant="secondary">Bank: {bankCredits ?? "—"} / {bankMax ?? "—"}</Badge>
+          <Badge variant="outline">Total: {items.length}</Badge>
         </div>
       </header>
 
@@ -89,21 +133,56 @@ export default function OCRHistory() {
                     items
                       .filter((i) => tab === "all" || i.type === tab)
                       .map((i) => (
-                        <a href={`/ocr/${i.type}/${i.id}`} key={`${i.type}-${i.id}`} className="flex items-center gap-3 p-3 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none">
-                          <Badge variant="outline" className="shrink-0 capitalize">{i.type}</Badge>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium truncate">{i.filename || (i.type === "bill" ? "Bill" : "Bank")} </div>
-                            <div className="text-xs text-muted-foreground">{new Date(i.created_at).toLocaleString()}</div>
-                          </div>
-                          {i.approved && (
-                            <span className="text-green-600 dark:text-green-400" title="Approved" aria-label="Approved">
-                              <CheckCircle2 className="h-4 w-4" />
-                            </span>
-                          )}
-                          <div className="text-xs text-muted-foreground max-w-[40%] truncate">
-                            {i.type === "bill" ? (i.data?.["หมายเลขใบเอกสาร (Doc_number)"] ?? "") : (i.data?.reference ?? "")}
-                          </div>
-                        </a>
+                        <div key={`${i.type}-${i.id}`} className="flex items-center gap-3 p-3 hover:bg-muted/30 focus:bg-muted/30 focus:outline-none">
+                          <a href={`/ocr/${i.type}/${i.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                            <Badge variant="outline" className="shrink-0 capitalize">{i.type}</Badge>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium truncate">{i.filename || (i.type === "bill" ? "Bill" : "Bank")} </div>
+                              <div className="text-xs text-muted-foreground">{new Date(i.created_at).toLocaleString()}</div>
+                            </div>
+                            {i.approved && (
+                              <span className="text-green-600 dark:text-green-400" title="Approved" aria-label="Approved">
+                                <CheckCircle2 className="h-4 w-4" />
+                              </span>
+                            )}
+                            <div className="text-xs text-muted-foreground max-w-[40%] truncate">
+                              {i.type === "bill" ? (i.data?.["หมายเลขใบเอกสาร (Doc_number)"] ?? i.data?.bill_no ?? "") : (i.data?.reference ?? "")}
+                            </div>
+                          </a>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                className="ml-2 p-1 rounded hover:bg-muted"
+                                aria-label="Item actions"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={async (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                const name = window.prompt('Rename file', i.filename || '');
+                                if (name !== null) {
+                                  const table = i.type === 'bill' ? 'ocr_bill_extractions' : 'ocr_bank_extractions';
+                                  const { error } = await supabase.from(table).update({ filename: name }).eq('id', i.id);
+                                  if (!error) {
+                                    setItems((prev) => prev.map((it) => it.id === i.id ? { ...it, filename: name } : it));
+                                  }
+                                }
+                              }}>Rename</DropdownMenuItem>
+                              <DropdownMenuItem onClick={async (e) => {
+                                e.preventDefault(); e.stopPropagation();
+                                if (!window.confirm('Delete this item?')) return;
+                                const table = i.type === 'bill' ? 'ocr_bill_extractions' : 'ocr_bank_extractions';
+                                const { error } = await supabase.from(table).delete().eq('id', i.id);
+                                if (!error) {
+                                  setItems((prev) => prev.filter((it) => it.id !== i.id));
+                                }
+                              }}>Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       ))
                   )}
                   {!loading && items.filter((i) => tab === "all" || i.type === tab).length === 0 && (
