@@ -24,6 +24,8 @@ const title = useMemo(() => "OCR Processing - Bill", []);
   const navigate = useNavigate();
   const [billCredits, setBillCredits] = useState<number | null>(null);
   const [bankCredits, setBankCredits] = useState<number | null>(null);
+  const [billMax, setBillMax] = useState<number | null>(null);
+  const [bankMax, setBankMax] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,6 +34,24 @@ const title = useMemo(() => "OCR Processing - Bill", []);
       if (data) {
         setBillCredits((data as any).bill ?? null);
         setBankCredits((data as any).bank ?? null);
+      }
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth?.user?.id;
+        if (uid) {
+          const { data: profile } = await supabase.from('profiles').select('plan_id').eq('id', uid).single();
+          const planId = (profile as any)?.plan_id;
+          if (planId) {
+            const { data: plan } = await supabase.from('plans').select('ocr_bill_limit, ocr_bank_limit').eq('id', planId).single();
+            setBillMax((plan as any)?.ocr_bill_limit ?? null);
+            setBankMax((plan as any)?.ocr_bank_limit ?? null);
+          } else {
+            setBillMax(null);
+            setBankMax(null);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load plan limits', e);
       }
     };
     load();
@@ -144,8 +164,8 @@ const analyze = async () => {
           </SelectContent>
         </Select>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="secondary">Bill: {billCredits ?? "—"}</Badge>
-          <Badge variant="secondary">Bank: {bankCredits ?? "—"}</Badge>
+          <Badge variant="secondary">Bill: {billCredits ?? "—"} / {billMax ?? "—"}</Badge>
+          <Badge variant="secondary">Bank: {bankCredits ?? "—"} / {bankMax ?? "—"}</Badge>
         </div>
       </header>
 

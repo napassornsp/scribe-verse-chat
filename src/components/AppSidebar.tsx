@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import service from "@/services/backend";
 import type { Chat } from "@/services/types";
 import useAuthSession from "@/hooks/useAuthSession";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppSidebarProps {
   chats: Chat[];
@@ -51,6 +52,24 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { user } = useAuthSession();
+
+  type OcrItem = { id: string; type: "bill" | "bank"; filename: string | null; created_at: string };
+  const [ocrItems, setOcrItems] = useState<OcrItem[]>([]);
+  useEffect(() => {
+    const load = async () => {
+      const [{ data: bills }, { data: banks }] = await Promise.all([
+        supabase.from("ocr_bill_extractions").select("id, filename, created_at").order("created_at", { ascending: false }).limit(8),
+        supabase.from("ocr_bank_extractions").select("id, filename, created_at").order("created_at", { ascending: false }).limit(8),
+      ]);
+      const billItems = (bills ?? []).map((b: any) => ({ id: b.id, type: "bill" as const, filename: b.filename ?? null, created_at: b.created_at }));
+      const bankItems = (banks ?? []).map((b: any) => ({ id: b.id, type: "bank" as const, filename: b.filename ?? null, created_at: b.created_at }));
+      const combined = [...billItems, ...bankItems]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 8);
+      setOcrItems(combined);
+    };
+    load();
+  }, []);
 
   const groups = useMemo(() => {
     const now = new Date();
@@ -168,6 +187,33 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
                   {!collapsed && <span className="font-medium">New Chat</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          {!collapsed && <SidebarGroupLabel>OCR History</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {ocrItems.length === 0 ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton disabled className="opacity-60">No history</SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : (
+                ocrItems.map((item) => (
+                  <SidebarMenuItem key={`${item.type}-${item.id}`}>
+                    <SidebarMenuButton
+                      tooltip={{ children: item.filename || (item.type === "bill" ? "Bill" : "Bank"), hidden: false }}
+                      className="overflow-hidden"
+                      onClick={() => (window.location.href = "/ocr/history")}
+                    >
+                      <FileText />
+                      {!collapsed && <span className="truncate">{item.filename || (item.type === "bill" ? "Bill" : "Bank")}</span>}
+                      {!collapsed && <Badge variant="outline" className="ml-auto capitalize">{item.type}</Badge>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
