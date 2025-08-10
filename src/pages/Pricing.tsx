@@ -1,26 +1,34 @@
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const plans = [
   { name: "Free", price: "$0", features: ["Basic chat", "Limited credits"], cta: "Get Started" },
   { name: "Pro", price: "$15/mo", features: ["All modules", "Higher limits", "Priority support"], cta: "Purchase" },
-  { name: "Enterprise", price: "Contact", features: ["Custom limits", "SLA", "Dedicated support"], cta: "Contact Sales" },
+  { name: "Premium", price: "Contact", features: ["Custom limits", "SLA", "Dedicated support"], cta: "Contact Sales" },
 ];
 
 export default function Pricing() {
+  const navigate = useNavigate();
   const canonical = typeof window !== "undefined" ? window.location.origin + "/pricing" : "";
   const onSelect = (name: string) => {
     window.alert(`${name} plan selected. Checkout coming soon.`);
   };
-
   return (
     <main className="container py-8 min-h-svh">
       <Helmet>
         <title>Pricing | Company</title>
-        <meta name="description" content="Choose the plan that fits your needs: Free, Pro, or Enterprise." />
+        <meta name="description" content="Choose the plan that fits your needs: Free, Pro, or Premium." />
         <link rel="canonical" href={canonical} />
       </Helmet>
+
+      <nav className="mb-2 flex justify-end">
+        <Button variant="ghost" size="icon" aria-label="Close pricing" onClick={() => navigate(-1)}>
+          <X />
+        </Button>
+      </nav>
 
       <header className="mb-6 text-center">
         <h1 className="text-3xl font-bold">Choose Your Plan</h1>
