@@ -24,12 +24,13 @@ export default function OCRBill() {
   const [extracted, setExtracted] = useState({ bill_no: "", date: "", vendor: "", total: "" });
   const [notes, setNotes] = useState("");
 
-const title = useMemo(() => "OCR Processing - Bill", []);
+  const title = useMemo(() => "OCR Processing - Bill", []);
   const navigate = useNavigate();
   const [billCredits, setBillCredits] = useState<number | null>(null);
   const [bankCredits, setBankCredits] = useState<number | null>(null);
   const [billMax, setBillMax] = useState<number | null>(null);
   const [bankMax, setBankMax] = useState<number | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,6 +39,12 @@ const title = useMemo(() => "OCR Processing - Bill", []);
       if (data) {
         setBillCredits((data as any).bill ?? null);
         setBankCredits((data as any).bank ?? null);
+      } else {
+        const { data: uc } = await supabase.from('user_credits').select('ocr_bill, ocr_bank').single();
+        if (uc) {
+          setBillCredits((uc as any).ocr_bill ?? null);
+          setBankCredits((uc as any).ocr_bank ?? null);
+        }
       }
       try {
         const { data: auth } = await supabase.auth.getUser();
@@ -50,8 +57,8 @@ const title = useMemo(() => "OCR Processing - Bill", []);
             setBillMax((plan as any)?.ocr_bill_limit ?? null);
             setBankMax((plan as any)?.ocr_bank_limit ?? null);
           } else {
-            setBillMax(null);
-            setBankMax(null);
+            setBillMax(12);
+            setBankMax(13);
           }
         }
       } catch (e) {
@@ -104,11 +111,11 @@ const title = useMemo(() => "OCR Processing - Bill", []);
       }
     }, 1200);
   };
-  const saveBill = async () => {
+  const saveBill = async (): Promise<string | null> => {
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
-      if (!uid) return;
+      if (!uid) return null;
 
       let fileUrl: string | null = null;
       if (file) {
@@ -120,22 +127,54 @@ const title = useMemo(() => "OCR Processing - Bill", []);
         }
       }
 
-      await supabase.from('ocr_bill_extractions').insert({
-        user_id: uid,
-        filename: file?.name ?? null,
-        file_url: fileUrl,
-        data: {
-          bill_no: extracted.bill_no,
-          date: extracted.date,
-          vendor: extracted.vendor,
-          total: extracted.total,
-          notes,
-        } as any,
-      });
+      const { data, error } = await supabase
+        .from('ocr_bill_extractions')
+        .insert({
+          user_id: uid,
+          filename: file?.name ?? null,
+          file_url: fileUrl,
+          data: {
+            bill_no: extracted.bill_no,
+            date: extracted.date,
+            vendor: extracted.vendor,
+            total: extracted.total,
+            notes,
+          } as any,
+        })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      if (data?.id) setSavedId(data.id);
       toast({ title: 'Saved', description: 'Bill extraction saved to history.' });
+      return data?.id ?? null;
     } catch (e) {
       console.error('Failed to save bill extraction', e);
       toast({ title: 'Save failed', description: 'Could not save bill extraction.' });
+      return null;
+    }
+  };
+
+  const approveBill = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return;
+      let id = savedId;
+      if (!id) {
+        id = await saveBill();
+      }
+      if (!id) return;
+      const { error } = await supabase
+        .from('ocr_bill_extractions')
+        .update({ approved: true })
+        .eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Approved', description: 'Marked as approved.' });
+      window.dispatchEvent(new CustomEvent('ocr:refresh'));
+    } catch (e) {
+      console.error('Failed to approve bill extraction', e);
+      toast({ title: 'Error', description: 'Could not mark as approved.' });
     }
   };
   const zoomIn = () => setScale((s) => Math.min(4, parseFloat((s + 0.25).toFixed(2))));
@@ -223,7 +262,7 @@ const title = useMemo(() => "OCR Processing - Bill", []);
                 <Textarea placeholder="Address or Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
                 <div className="flex gap-2">
-                  <Button>Approve File</Button>
+                  <Button onClick={approveBill}>Approve File</Button>
                   <Button variant="secondary" onClick={saveBill}>Save Data</Button>
                   <Button variant="outline">Export</Button>
                 </div>

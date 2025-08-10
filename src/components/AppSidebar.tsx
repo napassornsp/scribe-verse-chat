@@ -28,6 +28,7 @@ import {
   Home,
   LogIn,
   LogOut,
+  CheckCircle2,
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -56,22 +57,31 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   const location = useLocation();
   const isOcr = location.pathname.startsWith("/ocr");
 
-  type OcrItem = { id: string; type: "bill" | "bank"; filename: string | null; created_at: string };
+  type OcrItem = { id: string; type: "bill" | "bank"; filename: string | null; created_at: string; approved?: boolean; file_url?: string | null };
   const [ocrItems, setOcrItems] = useState<OcrItem[]>([]);
+
+  const loadOcr = async () => {
+    const [{ data: bills }, { data: banks }] = await Promise.all([
+      supabase.from("ocr_bill_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
+      supabase.from("ocr_bank_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
+    ]);
+    const billItems = (bills ?? []).map((b: any) => ({ id: b.id, type: "bill" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
+    const bankItems = (banks ?? []).map((b: any) => ({ id: b.id, type: "bank" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
+    const combined = [...billItems, ...bankItems]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 50);
+    setOcrItems(combined);
+  };
+
   useEffect(() => {
-    const load = async () => {
-      const [{ data: bills }, { data: banks }] = await Promise.all([
-        supabase.from("ocr_bill_extractions").select("id, filename, created_at").order("created_at", { ascending: false }).limit(8),
-        supabase.from("ocr_bank_extractions").select("id, filename, created_at").order("created_at", { ascending: false }).limit(8),
-      ]);
-      const billItems = (bills ?? []).map((b: any) => ({ id: b.id, type: "bill" as const, filename: b.filename ?? null, created_at: b.created_at }));
-      const bankItems = (banks ?? []).map((b: any) => ({ id: b.id, type: "bank" as const, filename: b.filename ?? null, created_at: b.created_at }));
-      const combined = [...billItems, ...bankItems]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 8);
-      setOcrItems(combined);
+    loadOcr();
+    const listener = () => loadOcr();
+    // @ts-ignore custom event
+    window.addEventListener('ocr:refresh', listener as any);
+    return () => {
+      // @ts-ignore custom event
+      window.removeEventListener('ocr:refresh', listener as any);
     };
-    load();
   }, []);
 
   const groups = useMemo(() => {

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, MoreVertical } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Item {
   id: string;
@@ -11,6 +13,7 @@ interface Item {
   filename: string | null;
   created_at: string;
   data: any;
+  approved?: boolean;
 }
 
 export default function OCRHistory() {
@@ -23,8 +26,8 @@ export default function OCRHistory() {
     const load = async () => {
       setLoading(true);
       const [{ data: bills }, { data: banks }] = await Promise.all([
-        supabase.from("ocr_bill_extractions").select("id, filename, created_at, data").order("created_at", { ascending: false }),
-        supabase.from("ocr_bank_extractions").select("id, filename, created_at, data").order("created_at", { ascending: false }),
+        supabase.from("ocr_bill_extractions").select("id, filename, created_at, data, approved").order("created_at", { ascending: false }),
+        supabase.from("ocr_bank_extractions").select("id, filename, created_at, data, approved").order("created_at", { ascending: false }),
       ]);
 
       const billItems: Item[] = (bills ?? []).map((b: any) => ({
@@ -33,6 +36,7 @@ export default function OCRHistory() {
         filename: b.filename ?? null,
         created_at: b.created_at,
         data: b.data,
+        approved: !!b.approved,
       }));
       const bankItems: Item[] = (banks ?? []).map((b: any) => ({
         id: b.id,
@@ -40,6 +44,7 @@ export default function OCRHistory() {
         filename: b.filename ?? null,
         created_at: b.created_at,
         data: b.data,
+        approved: !!b.approved,
       }));
 
       const combined = [...billItems, ...bankItems].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -90,6 +95,11 @@ export default function OCRHistory() {
                             <div className="text-sm font-medium truncate">{i.filename || (i.type === "bill" ? "Bill" : "Bank")} </div>
                             <div className="text-xs text-muted-foreground">{new Date(i.created_at).toLocaleString()}</div>
                           </div>
+                          {i.approved && (
+                            <span className="text-green-600 dark:text-green-400" title="Approved" aria-label="Approved">
+                              <CheckCircle2 className="h-4 w-4" />
+                            </span>
+                          )}
                           <div className="text-xs text-muted-foreground max-w-[40%] truncate">
                             {i.type === "bill" ? (i.data?.["หมายเลขใบเอกสาร (Doc_number)"] ?? "") : (i.data?.reference ?? "")}
                           </div>
