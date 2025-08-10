@@ -1,7 +1,7 @@
 export type BackendProvider = "supabase" | "flask";
 
 // NOTE: Lovable environment does not support .env. Configure here for now.
-export const BACKEND_PROVIDER: BackendProvider = "supabase";
+export const BACKEND_PROVIDER: BackendProvider = "flask";
 
 export const APP_CONFIG = {
   BACKEND_PROVIDER,

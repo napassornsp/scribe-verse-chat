@@ -27,6 +27,8 @@ function makeQueryBuilder(table: string) {
   let _filters: Record<string, any> = {};
   let _order: { column: string; ascending: boolean } | null = null;
   let _range: { from: number; to: number } | null = null;
+  let _limit: number | null = null;
+  let _select = '*';
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -35,14 +37,21 @@ function makeQueryBuilder(table: string) {
     if (_range) {
       params.append('from', String(_range.from));
       params.append('to', String(_range.to));
+    } else if (_limit != null) {
+      params.append('from', '0');
+      params.append('to', String(Math.max(0, _limit - 1)));
     }
     const qs = params.toString();
     return qs ? `?${qs}` : '';
   };
 
-  return {
-    select: async (_columns?: string) => {
-      return api(`/db/${table}${buildQuery()}`);
+  const fetchSelect = () => api(`/db/${table}${buildQuery()}`);
+
+  // Build a thenable query object similar to Supabase's PostgREST client
+  const builder: any = {
+    select(columns?: string) {
+      _select = columns || '*';
+      return builder;
     },
     insert: async (payload: any) => {
       return api(`/db/${table}`, { method: 'POST', body: JSON.stringify(payload) });
@@ -65,25 +74,35 @@ function makeQueryBuilder(table: string) {
     },
     order(column: string, opts: { ascending: boolean }) {
       _order = { column, ascending: !!opts?.ascending };
-      return this as any;
+      return builder;
     },
     range(from: number, to: number) {
       _range = { from, to };
-      return this as any;
+      return builder;
+    },
+    limit(count: number) {
+      _limit = count;
+      return builder;
     },
     eq(column: string, value: any) {
       _filters[column] = value;
-      return this as any;
+      return builder;
     },
-    single: async () => {
-      const res: any = await api(`/db/${table}${buildQuery()}`);
+    async single() {
+      const res: any = await fetchSelect();
       if (res.error) return res;
       if (Array.isArray(res.data)) {
         return { data: res.data[0] ?? null, error: null };
       }
       return res;
     },
-  } as any;
+    then(onFulfilled: any, onRejected: any) {
+      // When awaited or used in Promise chains, perform the GET
+      return fetchSelect().then(onFulfilled, onRejected);
+    },
+  };
+
+  return builder;
 }
 
 export const supabase: any = {
