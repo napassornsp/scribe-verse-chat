@@ -36,8 +36,11 @@ export default function OCRBank() {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.rpc('reset_monthly_ocr_credits');
-      if (data) {
+      const { data, error } = await supabase.rpc('reset_monthly_ocr_credits');
+      if (!error && Array.isArray(data) && data.length) {
+        setBillCredits((data[0] as any)?.bill ?? null);
+        setBankCredits((data[0] as any)?.bank ?? null);
+      } else if (!error && data && (data as any).bill !== undefined) {
         setBillCredits((data as any).bill ?? null);
         setBankCredits((data as any).bank ?? null);
       } else {

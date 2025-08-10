@@ -211,33 +211,43 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
         </SidebarGroup>
 
         {isOcr && (
-          <SidebarGroup>
+          <SidebarGroup className="min-h-0 flex-1 overflow-hidden">
             {!collapsed && <SidebarGroupLabel>OCR History</SidebarGroupLabel>}
             <SidebarGroupContent>
-              <SidebarMenu>
-                {ocrItems.length === 0 ? (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton disabled className="opacity-60">No history</SidebarMenuButton>
-                  </SidebarMenuItem>
-                ) : (
-                  ocrItems.map((item) => (
-                    <SidebarMenuItem key={`${item.type}-${item.id}`}>
-                      <SidebarMenuButton
-                        tooltip={{ children: item.filename || (item.type === "bill" ? "Bill" : "Bank"), hidden: false }}
-                        className="overflow-hidden"
-                        onClick={() => (window.location.href = `/ocr/${item.type}/${item.id}`)}
-                      >
-                        <FileText />
-                        {!collapsed && <span className="truncate">{item.filename || (item.type === "bill" ? "Bill" : "Bank")}</span>}
-                        {!collapsed && <Badge variant="outline" className="ml-auto capitalize">{item.type}</Badge>}
-                      </SidebarMenuButton>
+              <div className="min-h-0 max-h-full overflow-y-auto pr-1">
+                <SidebarMenu>
+                  {ocrItems.length === 0 ? (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled className="opacity-60">No history</SidebarMenuButton>
                     </SidebarMenuItem>
-                  ))
-                )}
-              </SidebarMenu>
+                  ) : (
+                    ocrItems.map((item) => (
+                      <SidebarMenuItem key={`${item.type}-${item.id}`}>
+                        <SidebarMenuButton
+                          tooltip={{ children: item.filename || (item.type === "bill" ? "Bill" : "Bank"), hidden: false }}
+                          className="overflow-hidden"
+                          onClick={() => (window.location.href = `/ocr/${item.type}/${item.id}`)}
+                        >
+                          <FileText />
+                          {!collapsed && (
+                            <span className="truncate flex-1">
+                              {item.filename || (item.type === "bill" ? "Bill" : "Bank")}
+                            </span>
+                          )}
+                          {!collapsed && item.approved && (
+                            <CheckCircle2 className="ml-1 h-4 w-4 text-green-600 dark:text-green-400" aria-label="Approved" />
+                          )}
+                          {!collapsed && <Badge variant="outline" className="ml-auto capitalize">{item.type}</Badge>}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))
+                  )}
+                </SidebarMenu>
+              </div>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
 
         <SidebarSeparator />
 
