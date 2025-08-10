@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 export default function VisionFood() {
   const canonical = typeof window !== "undefined" ? window.location.origin + "/vision/food" : "";
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  const title = useMemo(() => "Food Classification", []);
+const title = useMemo(() => "Food Classification", []);
+  const navigate = useNavigate();
 
   const onFile = (f: File | null) => {
     setFile(f);
@@ -32,6 +35,15 @@ export default function VisionFood() {
 
       <header className="flex items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
+        <Select value="food" onValueChange={(v) => navigate(v === 'flower' ? '/vision/flower' : '/vision/food')}>
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder="Select Vision Mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="flower">Flower Detection</SelectItem>
+            <SelectItem value="food">Food Classification</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="ml-auto flex items-center gap-2">
           <Badge variant="secondary">Mode: Food</Badge>
         </div>

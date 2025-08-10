@@ -73,6 +73,66 @@ export type Database = {
           },
         ]
       }
+      ocr_bank_extractions: {
+        Row: {
+          created_at: string
+          data: Json
+          file_url: string | null
+          filename: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ocr_bill_extractions: {
+        Row: {
+          created_at: string
+          data: Json
+          file_url: string | null
+          filename: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
@@ -81,6 +141,8 @@ export type Database = {
           credits_v3: number | null
           id: string
           name: string
+          ocr_bank_limit: number | null
+          ocr_bill_limit: number | null
           price_cents: number | null
           updated_at: string
         }
@@ -91,6 +153,8 @@ export type Database = {
           credits_v3?: number | null
           id?: string
           name: string
+          ocr_bank_limit?: number | null
+          ocr_bill_limit?: number | null
           price_cents?: number | null
           updated_at?: string
         }
@@ -101,6 +165,8 @@ export type Database = {
           credits_v3?: number | null
           id?: string
           name?: string
+          ocr_bank_limit?: number | null
+          ocr_bill_limit?: number | null
           price_cents?: number | null
           updated_at?: string
         }
@@ -159,6 +225,8 @@ export type Database = {
       user_credits: {
         Row: {
           last_reset_month: string
+          ocr_bank: number
+          ocr_bill: number
           updated_at: string
           user_id: string
           v1: number
@@ -167,6 +235,8 @@ export type Database = {
         }
         Insert: {
           last_reset_month?: string
+          ocr_bank?: number
+          ocr_bill?: number
           updated_at?: string
           user_id: string
           v1?: number
@@ -175,6 +245,8 @@ export type Database = {
         }
         Update: {
           last_reset_month?: string
+          ocr_bank?: number
+          ocr_bill?: number
           updated_at?: string
           user_id?: string
           v1?: number
@@ -194,6 +266,13 @@ export type Database = {
           v1: number
           v2: number
           v3: number
+        }[]
+      }
+      reset_monthly_ocr_credits: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          bill: number
+          bank: number
         }[]
       }
     }

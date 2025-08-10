@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ZoomIn, ZoomOut, RefreshCw, FlipHorizontal } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 export default function OCRBill() {
   const canonical = typeof window !== "undefined" ? window.location.origin + "/ocr/bill" : "";
@@ -16,22 +19,102 @@ export default function OCRBill() {
   const [scale, setScale] = useState(1);
   const [flipped, setFlipped] = useState(false);
 
-  const title = useMemo(() => "OCR Processing - Bill", []);
+const title = useMemo(() => "OCR Processing - Bill", []);
+  const navigate = useNavigate();
+  const [billCredits, setBillCredits] = useState<number | null>(null);
+  const [bankCredits, setBankCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase.rpc('reset_monthly_ocr_credits');
+      if (data) {
+        setBillCredits((data as any).bill ?? null);
+        setBankCredits((data as any).bank ?? null);
+      }
+    };
+    load();
+  }, []);
 
   const onFile = (f: File | null) => {
     setFile(f);
     setPreview(f ? URL.createObjectURL(f) : null);
   };
 
-  const analyze = () => {
+const analyze = async () => {
     setProcessing(true);
-    setTimeout(() => setProcessing(false), 1200); // mock
+    setTimeout(async () => {
+      setProcessing(false);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const uid = userData?.user?.id;
+        if (uid && billCredits !== null) {
+          const newVal = Math.max(0, billCredits - 1);
+          await supabase.from('user_credits').update({ ocr_bill: newVal }).eq('user_id', uid);
+          setBillCredits(newVal);
+        }
+      } catch (e) {
+        console.error('Failed to decrement bill credits', e);
+      }
+    }, 1200); // mock
   };
+  const saveBill = async () => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) return;
+      const template = {
+        "ชื่อผู้ซื้อภาษาไทย (buyer_name_thai)": "",
+        "ชื่อผู้ซื้อภาษาอังกฤษ (buyer_name_eng)": "",
+        "สาขาผู้ซื้อ (buyer_branch)": "",
+        "ที่อยู่ผู้ซื้อภาษาไทย (buyer_address_thai)": "",
+        "ที่อยู่ผู้ซื้อภาษาอังกฤษ (buyer_address_eng)": "",
+        "หมายเลขภาษีผู้ซื้อ (buyer_vat_number)": "",
+        "ชื่อผู้ขายภาษาไทย (seller_name_thai)": "",
+        "ชื่อผู้ขายภาษาอังกฤษ (seller_name_eng)": "",
+        "สาขาผู้ขาย (seller_branch)": "",
+        "ที่อยู่ผู้ขายภาษาไทย (seller_address_thai)": "",
+        "ที่อยู่ผู้ขายภาษาอังกฤษ (seller_address_eng)": "",
+        "หมายเลขภาษีผู้ขาย (seller_vat_number)": "",
+        "ประเภทเอกสาร (Document type)": "",
+        "หมายเลขใบเอกสาร (Doc_number)": "",
+        "วันที่ของเอกสาร (Doc_date)": "",
+        "ตาราง (Table)": [],
+        "จำนวนเงินส่วนลด (discount_amount)": "",
+        "ยอดรวมก่อนภาษี (sub_total)": "",
+        "เปอร์เซ็นต์ภาษีมูลค่าเพิ่ม (vat_%)": "",
+        "จำนวนเงินภาษีมูลค่าเพิ่ม (vat_amount)": "",
+        "ยอดรวมสุทธิ (total_due_amount)": "",
+        "ยอดรวมตัวอักษร (text_amount)": "",
+        "สกุลเงิน (currency)": "",
+        "เปอร์เซ็นต์ภาษีหัก ณ ที่จ่าย (WHT_%)": "",
+        "จำนวนเงินภาษีหัก ณ ที่จ่าย (WHT_amount)": "",
+        "เบอร์แฟกซ์ผู้ขาย (seller_fax_number)": "",
+        "เบอร์แฟกซ์ผู้ซื้อ (buyer_fax_number)": "",
+        "เบอร์โทรศัพท์ผู้ขาย (seller_phone)": "",
+        "เบอร์โทรศัพท์ผู้ซื้อ (buyer_phone)": "",
+        "รหัสลูกค้า (client_id)": "",
+        "วันครบกำหนดชำระเงิน (payment_due_date)": "",
+        "หมายเลขคำสั่งซื้อ (po_number)": "",
+        "อีเมลผู้ขาย (seller_email)": "",
+        "เว็บไซต์ผู้ขาย (seller_website)": "",
+        "ที่อยู่จัดส่งสินค้า (shipto_address)": "",
+        "รหัสสินค้า (product_code)": "",
+        "อัตราแลกเปลี่ยน (exchange rate)": ""
+      } as const;
 
+      await supabase.from('ocr_bill_extractions').insert({
+        user_id: uid,
+        filename: file?.name ?? null,
+        file_url: null,
+        data: template as any
+      });
+    } catch (e) {
+      console.error('Failed to save bill extraction', e);
+    }
+  };
   const zoomIn = () => setScale((s) => Math.min(4, parseFloat((s + 0.25).toFixed(2))));
   const zoomOut = () => setScale((s) => Math.max(0.5, parseFloat((s - 0.25).toFixed(2))));
   const resetView = () => { setScale(1); setFlipped(false); };
-
   return (
     <div className="container py-6">
       <Helmet>
@@ -42,10 +125,18 @@ export default function OCRBill() {
 
       <header className="flex items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
+        <Select value="bill" onValueChange={(v) => navigate(v === 'bank' ? '/ocr/bank' : '/ocr/bill')}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Select OCR Mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="bill">Bill Processing</SelectItem>
+            <SelectItem value="bank">Bank Processing</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="ml-auto flex items-center gap-2">
-          <Badge variant="secondary">Free: 12</Badge>
-          <Badge variant="secondary">Plus: 14</Badge>
-          <Badge variant="secondary">Premium: 16</Badge>
+          <Badge variant="secondary">Bill: {billCredits ?? "—"}</Badge>
+          <Badge variant="secondary">Bank: {bankCredits ?? "—"}</Badge>
         </div>
       </header>
 
@@ -108,7 +199,7 @@ export default function OCRBill() {
                 <div className="text-xs text-muted-foreground">Processing time: {processing ? "…" : "1.2s"}</div>
                 <div className="flex gap-2">
                   <Button>Approve File</Button>
-                  <Button variant="secondary">Save Data</Button>
+                  <Button variant="secondary" onClick={saveBill}>Save Data</Button>
                   <Button variant="outline">Export</Button>
                 </div>
               </TabsContent>

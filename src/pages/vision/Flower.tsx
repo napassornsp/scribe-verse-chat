@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
+ 
 export default function VisionFlower() {
   const canonical = typeof window !== "undefined" ? window.location.origin + "/vision/flower" : "";
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  const title = useMemo(() => "Flower Detection", []);
+const title = useMemo(() => "Flower Detection", []);
+  const navigate = useNavigate();
 
   const onFile = (f: File | null) => {
     setFile(f);
@@ -34,6 +37,15 @@ export default function VisionFlower() {
 
       <header className="flex items-center gap-3 mb-4">
         <h1 className="text-2xl font-bold">{title}</h1>
+        <Select value="flower" onValueChange={(v) => navigate(v === 'food' ? '/vision/food' : '/vision/flower')}>
+          <SelectTrigger className="w-52">
+            <SelectValue placeholder="Select Vision Mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="flower">Flower Detection</SelectItem>
+            <SelectItem value="food">Food Classification</SelectItem>
+          </SelectContent>
+        </Select>
         <div className="ml-auto flex items-center gap-2">
           <Badge variant="secondary">Mode: Flower</Badge>
         </div>
