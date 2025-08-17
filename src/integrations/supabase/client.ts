@@ -29,6 +29,8 @@ function makeQueryBuilder(table: string) {
   let _range: { from: number; to: number } | null = null;
   let _limit: number | null = null;
   let _select = '*';
+  let _insertPayload: any = null;
+  let _updatePayload: any = null;
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -45,7 +47,16 @@ function makeQueryBuilder(table: string) {
     return qs ? `?${qs}` : '';
   };
 
-  const fetchSelect = () => api(`/db/${table}${buildQuery()}`);
+  const executeOperation = async () => {
+    if (_insertPayload) {
+      return api(`/db/${table}`, { method: 'POST', body: JSON.stringify(_insertPayload) });
+    } else if (_updatePayload) {
+      const qs = buildQuery();
+      return api(`/db/${table}${qs}`, { method: 'PATCH', body: JSON.stringify(_updatePayload) });
+    } else {
+      return api(`/db/${table}${buildQuery()}`);
+    }
+  };
 
   // Build a thenable query object similar to Supabase's PostgREST client
   const builder: any = {
@@ -53,16 +64,13 @@ function makeQueryBuilder(table: string) {
       _select = columns || '*';
       return builder;
     },
-    insert: async (payload: any) => {
-      return api(`/db/${table}`, { method: 'POST', body: JSON.stringify(payload) });
+    insert(payload: any) {
+      _insertPayload = payload;
+      return builder;
     },
     update(payload: any) {
-      return {
-        eq: async (column: string, value: any) => {
-          const qs = new URLSearchParams({ [`eq.${column}`]: String(value) }).toString();
-          return api(`/db/${table}?${qs}`, { method: 'PATCH', body: JSON.stringify(payload) });
-        },
-      };
+      _updatePayload = payload;
+      return builder;
     },
     delete() {
       return {
@@ -89,7 +97,7 @@ function makeQueryBuilder(table: string) {
       return builder;
     },
     async single() {
-      const res: any = await fetchSelect();
+      const res: any = await executeOperation();
       if (res.error) return res;
       if (Array.isArray(res.data)) {
         return { data: res.data[0] ?? null, error: null };
@@ -97,8 +105,7 @@ function makeQueryBuilder(table: string) {
       return res;
     },
     then(onFulfilled: any, onRejected: any) {
-      // When awaited or used in Promise chains, perform the GET
-      return fetchSelect().then(onFulfilled, onRejected);
+      return executeOperation().then(onFulfilled, onRejected);
     },
   };
 
