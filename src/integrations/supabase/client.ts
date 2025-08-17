@@ -31,6 +31,7 @@ function makeQueryBuilder(table: string) {
   let _select = '*';
   let _insertPayload: any = null;
   let _updatePayload: any = null;
+  let _selectColumns: string | null = null;
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -49,7 +50,9 @@ function makeQueryBuilder(table: string) {
 
   const executeOperation = async () => {
     if (_insertPayload) {
-      return api(`/db/${table}`, { method: 'POST', body: JSON.stringify(_insertPayload) });
+      // For inserts, Flask backend always returns the created data
+      const result = await api(`/db/${table}`, { method: 'POST', body: JSON.stringify(_insertPayload) });
+      return result;
     } else if (_updatePayload) {
       const qs = buildQuery();
       return api(`/db/${table}${qs}`, { method: 'PATCH', body: JSON.stringify(_updatePayload) });
@@ -61,16 +64,21 @@ function makeQueryBuilder(table: string) {
   // Build a thenable query object similar to Supabase's PostgREST client
   const builder: any = {
     select(columns?: string) {
-      _select = columns || '*';
+      _selectColumns = columns || '*';
       return builder;
     },
     insert(payload: any) {
       _insertPayload = payload;
-      return builder;
+      return builder; // Return builder to allow chaining
     },
     update(payload: any) {
       _updatePayload = payload;
-      return builder;
+      return {
+        eq: (column: string, value: any) => {
+          _filters[column] = value;
+          return builder;
+        }
+      };
     },
     delete() {
       return {
@@ -80,8 +88,8 @@ function makeQueryBuilder(table: string) {
         },
       };
     },
-    order(column: string, opts: { ascending: boolean }) {
-      _order = { column, ascending: !!opts?.ascending };
+    order(column: string, opts?: { ascending?: boolean }) {
+      _order = { column, ascending: opts?.ascending ?? false };
       return builder;
     },
     range(from: number, to: number) {
@@ -97,6 +105,14 @@ function makeQueryBuilder(table: string) {
       return builder;
     },
     async single() {
+      const res: any = await executeOperation();
+      if (res.error) return res;
+      if (Array.isArray(res.data)) {
+        return { data: res.data[0] ?? null, error: null };
+      }
+      return res;
+    },
+    async maybeSingle() {
       const res: any = await executeOperation();
       if (res.error) return res;
       if (Array.isArray(res.data)) {
