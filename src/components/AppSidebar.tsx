@@ -61,21 +61,16 @@ export function AppSidebar({ chats, activeId, onSelect, onNewChat, onRename, onD
   const [ocrItems, setOcrItems] = useState<OcrItem[]>([]);
 
   const loadOcr = async () => {
-    try {
-      const [{ data: bills }, { data: banks }] = await Promise.all([
-        supabase.from("ocr_bill_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
-        supabase.from("ocr_bank_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
-      ]);
-      const billItems = (bills ?? []).map((b: any) => ({ id: b.id, type: "bill" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
-      const bankItems = (banks ?? []).map((b: any) => ({ id: b.id, type: "bank" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
-      const combined = [...billItems, ...bankItems]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 50);
-      setOcrItems(combined);
-    } catch (error) {
-      console.error('Failed to load OCR items:', error);
-      setOcrItems([]);
-    }
+    const [{ data: bills }, { data: banks }] = await Promise.all([
+      supabase.from("ocr_bill_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
+      supabase.from("ocr_bank_extractions").select("id, filename, created_at, approved, file_url").order("created_at", { ascending: false }).limit(50),
+    ]);
+    const billItems = (bills ?? []).map((b: any) => ({ id: b.id, type: "bill" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
+    const bankItems = (banks ?? []).map((b: any) => ({ id: b.id, type: "bank" as const, filename: b.filename ?? null, created_at: b.created_at, approved: !!b.approved, file_url: b.file_url ?? null }));
+    const combined = [...billItems, ...bankItems]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 50);
+    setOcrItems(combined);
   };
 
   useEffect(() => {
